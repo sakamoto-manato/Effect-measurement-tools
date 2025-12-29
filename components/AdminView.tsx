@@ -1,0 +1,358 @@
+
+import React, { useState } from 'react';
+import { Organization, User, Role, RankDefinition } from '../types';
+import { MOCK_ORGS, MOCK_USERS } from '../constants';
+import OrgModal from './OrgModal';
+import UserModal from './UserModal';
+import RankDefinitionEditor from './RankDefinitionEditor';
+import { getRankDefinition } from '../services/rankDefinitionService';
+
+interface AdminViewProps {
+  type: 'orgs' | 'users';
+  onSelectOrg?: (org: Organization) => void;
+  orgId?: string; // 法人専用ダッシュボードの場合、所属法人IDを指定
+}
+
+const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
+  const [orgs, setOrgs] = useState<Organization[]>(MOCK_ORGS);
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRankDefinitionModalOpen, setIsRankDefinitionModalOpen] = useState(false);
+  const [editingRankDefinitionOrg, setEditingRankDefinitionOrg] = useState<Organization | null>(null);
+
+  const handleDeleteOrg = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('この法人アカウントを削除してもよろしいですか？すべてのデータが消失します。')) {
+      setOrgs(orgs.filter(o => o.id !== id));
+    }
+  };
+
+  const handleDeleteUser = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('このユーザーを削除してもよろしいですか？')) {
+      const userToDelete = users.find(u => u.id === id);
+      setUsers(users.filter(u => u.id !== id));
+      
+      // 所属法人のメンバー数を更新
+      if (userToDelete?.orgId) {
+        setOrgs(orgs.map(org => 
+          org.id === userToDelete.orgId
+            ? { ...org, memberCount: Math.max(0, org.memberCount - 1) }
+            : org
+        ));
+      }
+    }
+  };
+
+  const handleOpenTenantLogin = (org: Organization) => {
+    // Generate the URL for the specific corporation's login page
+    const url = new URL(window.location.href);
+    url.searchParams.set('tenant', org.slug);
+    // Redirect to simulate jumping to the corporate-specific dashboard login
+    window.location.href = url.toString();
+  };
+
+  const handleOpenAddOrgModal = () => {
+    setEditingOrg(null);
+    setIsOrgModalOpen(true);
+  };
+
+  const handleOpenEditOrgModal = (org: Organization) => {
+    setEditingOrg(org);
+    setIsOrgModalOpen(true);
+  };
+
+  const handleOpenRankDefinitionEditor = (org: Organization) => {
+    setEditingRankDefinitionOrg(org);
+    setIsRankDefinitionModalOpen(true);
+  };
+
+  const handleSaveRankDefinition = (rankDefinition: RankDefinition) => {
+    if (editingRankDefinitionOrg) {
+      setOrgs(orgs.map(org =>
+        org.id === editingRankDefinitionOrg.id
+          ? { ...org, rankDefinition }
+          : org
+      ));
+    }
+  };
+
+  const handleOpenAddUserModal = () => {
+    setEditingUser(null);
+    setIsUserModalOpen(true);
+  };
+
+  const handleOpenEditUserModal = (user: User) => {
+    setEditingUser(user);
+    setIsUserModalOpen(true);
+  };
+
+  const handleSaveOrg = (orgData: Omit<Organization, 'id' | 'createdAt' | 'memberCount' | 'avgScore'>) => {
+    if (editingOrg) {
+      // 編集モード：パスワードが空の場合は既存のパスワードを保持
+      const updatedOrgData = orgData.password 
+        ? orgData 
+        : { ...orgData, password: editingOrg.password };
+      setOrgs(orgs.map(org => 
+        org.id === editingOrg.id 
+          ? { ...org, ...updatedOrgData }
+          : org
+      ));
+    } else {
+      // 新規追加モード
+      const newOrg: Organization = {
+        ...orgData,
+        id: `org-${Date.now()}`,
+        createdAt: new Date().toISOString().split('T')[0],
+        memberCount: 0,
+        avgScore: 0,
+      };
+      setOrgs([...orgs, newOrg]);
+    }
+    setIsOrgModalOpen(false);
+    setEditingOrg(null);
+  };
+
+  const handleSaveUser = (userData: Omit<User, 'id' | 'scores'>) => {
+    if (editingUser) {
+      // 編集モード
+      setUsers(users.map(user => 
+        user.id === editingUser.id 
+          ? { ...user, ...userData, scores: editingUser.scores }
+          : user
+      ));
+    } else {
+      // 新規追加モード
+      const newUser: User = {
+        ...userData,
+        id: `u-${Date.now()}`,
+        scores: { basics: 0, prompting: 0, ethics: 0, tools: 0, automation: 0 },
+      };
+      setUsers([...users, newUser]);
+      
+      // 所属法人のメンバー数を更新
+      if (userData.orgId) {
+        setOrgs(orgs.map(org => 
+          org.id === userData.orgId
+            ? { ...org, memberCount: org.memberCount + 1 }
+            : org
+        ));
+      }
+    }
+    setIsUserModalOpen(false);
+    setEditingUser(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+            🔍
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={type === 'orgs' ? '法人名で検索...' : '名前またはメールで検索...'}
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        {type === 'orgs' ? (
+          <button
+            onClick={handleOpenAddOrgModal}
+            className="ml-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+          >
+            新規法人を追加
+          </button>
+        ) : (
+          <button
+            onClick={handleOpenAddUserModal}
+            className="ml-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+          >
+            ユーザーを招待
+          </button>
+        )}
+      </div>
+
+      <div className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden">
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50">
+            <tr>
+              {type === 'orgs' ? (
+                <>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロゴ</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">法人名</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">登録日</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">メンバー数</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">平均スコア</th>
+                </>
+              ) : (
+                <>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">氏名</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">メールアドレス</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロール</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">所属法人ID</th>
+                </>
+              )}
+              <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">アクション</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-slate-200">
+            {type === 'orgs' ? (
+              orgs.map((org) => (
+                <tr key={org.id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {org.logo ? (
+                      <img
+                        src={org.logo}
+                        alt={org.name}
+                        className="w-10 h-10 object-contain rounded border border-slate-200 bg-white"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded border border-slate-200 bg-slate-100 flex items-center justify-center">
+                        <span className="text-slate-400 text-lg">🏢</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{org.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{org.createdAt}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{org.memberCount} 名</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${org.avgScore > 70 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+                      {org.avgScore}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                      onClick={() => handleOpenTenantLogin(org)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4 font-bold bg-indigo-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      ログインページへ飛ぶ
+                    </button>
+                    <button 
+                      onClick={() => handleOpenRankDefinitionEditor(org)}
+                      className="text-purple-600 hover:text-purple-900 mr-4"
+                      title="ランク定義を編集"
+                    >
+                      ランク定義
+                    </button>
+                    <button 
+                      onClick={() => handleOpenEditOrgModal(org)}
+                      className="text-slate-400 hover:text-indigo-600 mr-4"
+                    >
+                      編集
+                    </button>
+                    <button onClick={(e) => handleDeleteOrg(org.id, e)} className="text-red-400 hover:text-red-600">削除</button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              (() => {
+                // ユーザーリストをフィルタリング
+                let filteredUsers = users;
+                
+                // 法人専用ダッシュボードの場合、その法人のユーザーのみ表示
+                if (orgId) {
+                  filteredUsers = filteredUsers.filter(u => u.orgId === orgId);
+                }
+                
+                // 検索クエリでフィルタリング
+                if (searchQuery) {
+                  const query = searchQuery.toLowerCase();
+                  filteredUsers = filteredUsers.filter(u => 
+                    u.name.toLowerCase().includes(query) || 
+                    u.email.toLowerCase().includes(query)
+                  );
+                }
+                
+                return filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs text-slate-500">
+                        {user.name.charAt(0)}
+                      </div>
+                      <div className="ml-3 text-sm font-medium text-slate-900">{user.name}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{user.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${
+                      user.role === Role.SUPER_ADMIN ? 'bg-purple-100 text-purple-800' : 
+                      user.role === Role.ORG_ADMIN ? 'bg-blue-100 text-blue-800' : 
+                      'bg-slate-100 text-slate-800'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{user.orgId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                      onClick={() => handleOpenEditUserModal(user)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    >
+                      編集
+                    </button>
+                    <button onClick={(e) => handleDeleteUser(user.id, e)} className="text-red-400 hover:text-red-600">削除</button>
+                  </td>
+                </tr>
+                ));
+              })()
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 法人編集/追加モーダル */}
+      {type === 'orgs' && (
+        <OrgModal
+          isOpen={isOrgModalOpen}
+          onClose={() => {
+            setIsOrgModalOpen(false);
+            setEditingOrg(null);
+          }}
+          onSave={handleSaveOrg}
+          org={editingOrg}
+        />
+      )}
+
+      {/* ユーザー編集/追加モーダル */}
+      {type === 'users' && (
+        <UserModal
+          isOpen={isUserModalOpen}
+          onClose={() => {
+            setIsUserModalOpen(false);
+            setEditingUser(null);
+          }}
+          onSave={handleSaveUser}
+          user={editingUser}
+          orgId={orgId}
+        />
+      )}
+
+      {/* ランク定義編集モーダル */}
+      {type === 'orgs' && editingRankDefinitionOrg && (
+        <RankDefinitionEditor
+          orgId={editingRankDefinitionOrg.id}
+          isOpen={isRankDefinitionModalOpen}
+          onClose={() => {
+            setIsRankDefinitionModalOpen(false);
+            setEditingRankDefinitionOrg(null);
+          }}
+          onSave={handleSaveRankDefinition}
+          initialRankDefinition={editingRankDefinitionOrg.rankDefinition || getRankDefinition(editingRankDefinitionOrg.id)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default AdminView;

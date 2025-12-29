@@ -1,0 +1,7 @@
+{
+  "name": "AI Literacy SaaS Dashboard",
+  "description": "A multi-tenant dashboard system for managing and visualizing AI literacy levels across different corporations, featuring RBAC and Gemini-powered improvement insights.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
