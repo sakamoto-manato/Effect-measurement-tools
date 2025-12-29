@@ -118,17 +118,17 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* システム管理者用：法人選択セレクター */}
       {isSuperAdmin && organizations.length > 0 && (
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="text-lg">🏢</span>
-              <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <span className="text-lg flex-shrink-0">🏢</span>
+              <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   法人を選択してダッシュボードを表示
                 </label>
                 <select
                   value={viewingOrg?.id || ''}
                   onChange={handleOrgChange}
-                  className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900 min-w-[300px]"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900"
                 >
                   <option value="">マイダッシュボード</option>
                   {organizations.map(org => (
@@ -145,7 +145,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onSelectOrg?.(null);
                   onClearView();
                 }}
-                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap"
               >
                 クリア
               </button>
@@ -156,23 +156,23 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* 法人ビュー表示バナー */}
       {viewingOrg && (
-        <div className="bg-indigo-600 text-white px-6 py-4 rounded-xl shadow-md flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+        <div className="bg-indigo-600 text-white px-4 sm:px-6 py-4 rounded-xl shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
             {viewingOrg.logo ? (
               <img
                 src={viewingOrg.logo}
                 alt={viewingOrg.name}
-                className="w-12 h-12 object-contain bg-white rounded-lg p-1"
+                className="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1 flex-shrink-0"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
-              <span className="text-2xl">🏢</span>
+              <span className="text-xl sm:text-2xl flex-shrink-0">🏢</span>
             )}
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-indigo-200 font-bold uppercase tracking-wider">組織ビュー実行中</p>
-              <h3 className="text-xl font-bold">{viewingOrg.name} の状況を表示しています</h3>
+              <h3 className="text-base sm:text-xl font-bold truncate">{viewingOrg.name} の状況を表示しています</h3>
             </div>
           </div>
           <button 
@@ -180,7 +180,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               onSelectOrg?.(null);
               onClearView();
             }}
-            className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap self-start sm:self-auto"
           >
             {isSuperAdmin ? 'マイダッシュボードに戻る' : 'クリア'}
           </button>
@@ -189,15 +189,15 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Radar Chart Card */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6">
             {viewingOrg ? '組織平均リテラシー分布' : 'リテラシー・レーダーチャート'}
           </h3>
-          <div className="h-72 w-full">
+          <div className="h-64 sm:h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                 <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12 }} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} />
                 <Radar
                   name={displayName}
@@ -212,20 +212,20 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* AI Insight Card */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-base sm:text-lg font-bold text-slate-800">
               {viewingOrg ? '組織向け AI 戦略アドバイス' : 'Gemini AI 分析アドバイス'}
             </h3>
             <button
               onClick={fetchInsight}
               disabled={loadingInsight}
-              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap ml-2"
             >
               {loadingInsight ? '分析中...' : '再生成'}
             </button>
           </div>
-          <div className="flex-1 bg-indigo-50/50 rounded-lg p-5 border border-indigo-100 text-slate-700 text-sm leading-relaxed overflow-y-auto max-h-64">
+          <div className="flex-1 bg-indigo-50/50 rounded-lg p-4 sm:p-5 border border-indigo-100 text-slate-700 text-xs sm:text-sm leading-relaxed overflow-y-auto max-h-64">
             {loadingInsight ? (
               <div className="flex flex-col items-center justify-center h-full space-y-2">
                 <div className="w-8 h-8 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
@@ -243,34 +243,34 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
             {viewingOrg ? '組織平均スコア' : '総合スコア'}
           </p>
-          <div className="flex items-end space-x-2">
-            <span className="text-4xl font-bold text-slate-900">
+          <div className="flex items-end space-x-1 sm:space-x-2">
+            <span className="text-2xl sm:text-4xl font-bold text-slate-900">
               {calculatedScores ? calculateOverallScore(calculatedScores) : (viewingOrg ? viewingOrg.avgScore : Math.round((Object.values(displayScores) as number[]).reduce((a, b) => a + b, 0) / 5))}
             </span>
-            <span className="text-slate-400 text-sm mb-1">/ 100</span>
+            <span className="text-slate-400 text-xs sm:text-sm mb-1">/ 100</span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
             回答者数
           </p>
-          <div className="flex items-end space-x-2">
-            <span className="text-3xl font-bold text-indigo-600">
+          <div className="flex items-end space-x-1 sm:space-x-2">
+            <span className="text-xl sm:text-3xl font-bold text-indigo-600">
               {orgResponses.length}名
             </span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
             総削減時間
           </p>
-          <div className="flex items-end space-x-2">
-            <span className="text-3xl font-bold text-emerald-600">
+          <div className="flex items-end space-x-1 sm:space-x-2">
+            <span className="text-xl sm:text-3xl font-bold text-emerald-600">
               {(() => {
                 const totalHours = orgResponses.reduce((sum, response) => {
                   const timeReductionAnswer = response.answers.find(a => {
@@ -291,10 +291,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             </span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">削減率</p>
-          <div className="flex items-end space-x-2">
-            <span className="text-3xl font-bold text-purple-600">
+          <div className="flex items-end space-x-1 sm:space-x-2">
+            <span className="text-xl sm:text-3xl font-bold text-purple-600">
               {(() => {
                 const totalHours = orgResponses.reduce((sum, response) => {
                   const timeReductionAnswer = response.answers.find(a => {
@@ -321,8 +321,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* アンケート回答一覧 */}
       {surveys.length > 0 && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">アンケート回答一覧</h3>
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">アンケート回答一覧</h3>
           <div className="mb-4">
             <label className="block text-sm font-medium text-slate-700 mb-2">
               アンケートを選択
@@ -330,7 +330,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <select
               value={selectedSurveyId || ''}
               onChange={(e) => setSelectedSurveyId(e.target.value || null)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900 min-w-[300px]"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900"
             >
               <option value="">すべてのアンケート</option>
               {surveys.map(survey => (
@@ -352,15 +352,15 @@ const Dashboard: React.FC<DashboardProps> = ({
                   className="p-4 border border-slate-200 rounded-lg hover:border-indigo-300 transition-colors cursor-pointer"
                   onClick={() => setSelectedResponse(response)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-slate-800">{response.respondentName}</p>
-                      <p className="text-sm text-slate-500">{survey?.title || 'アンケート'}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-800 truncate">{response.respondentName}</p>
+                      <p className="text-sm text-slate-500 truncate">{survey?.title || 'アンケート'}</p>
                       <p className="text-xs text-slate-400 mt-1">
                         {new Date(response.submittedAt).toLocaleString('ja-JP')}
                       </p>
                     </div>
-                    <button className="text-indigo-600 hover:text-indigo-800 text-sm">
+                    <button className="text-indigo-600 hover:text-indigo-800 text-sm whitespace-nowrap self-start sm:self-auto">
                       詳細を見る
                     </button>
                   </div>
@@ -376,9 +376,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* リテラシー推移グラフ（月次） */}
       {orgResponses.length > 0 && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">リテラシー推移（月次）</h3>
-          <div className="h-80 w-full">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6">リテラシー推移（月次）</h3>
+          <div className="h-64 sm:h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={(() => {
                 // 過去6ヶ月のデータを生成
@@ -413,9 +413,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* 業務削減時間分析 */}
       {orgResponses.length > 0 && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">業務削減時間分析</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6">業務削減時間分析</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <h4 className="text-sm font-medium text-slate-700 mb-4">削減時間の分布</h4>
               <div className="h-64 w-full">
@@ -544,8 +544,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* 回答詳細モーダル */}
       {selectedResponse && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-slate-800">回答詳細</h3>
               <button

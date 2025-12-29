@@ -31,14 +31,14 @@ const RankDefinitionSettings: React.FC<RankDefinitionSettingsProps> = ({ org }) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">ランク定義設定</h2>
-          <p className="text-slate-600">AI活用レベルのランク定義をカスタマイズできます</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">ランク定義設定</h2>
+          <p className="text-sm sm:text-base text-slate-600">AI活用レベルのランク定義をカスタマイズできます</p>
         </div>
         <button
           onClick={handleOpenEditor}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 whitespace-nowrap self-start sm:self-auto"
         >
           <span>✏️</span>
           ランク定義を編集
@@ -46,13 +46,13 @@ const RankDefinitionSettings: React.FC<RankDefinitionSettingsProps> = ({ org }) 
       </div>
 
       {rankDefinition && (
-        <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">現在のランク定義</h3>
+        <div className="bg-white rounded-lg p-4 sm:p-6 border border-slate-200 shadow-sm">
+          <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-4">現在のランク定義</h3>
           <div className="space-y-4">
             {rankDefinition.ranks.map((rank, index) => (
               <div key={rank.id} className="border border-slate-200 rounded-lg p-4">
-                <h4 className="font-medium text-slate-700 mb-2">{rank.name}</h4>
-                <ul className="list-disc list-inside text-sm text-slate-600 space-y-1 ml-4">
+                <h4 className="font-medium text-sm sm:text-base text-slate-700 mb-2">{rank.name}</h4>
+                <ul className="list-disc list-inside text-xs sm:text-sm text-slate-600 space-y-1 ml-4">
                   {rank.descriptions.map((desc, descIndex) => (
                     <li key={descIndex}>{desc}</li>
                   ))}

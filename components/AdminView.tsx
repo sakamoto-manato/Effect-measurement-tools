@@ -149,8 +149,8 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="relative flex-1 w-full sm:max-w-md">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
             🔍
           </span>
@@ -159,98 +159,101 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={type === 'orgs' ? '法人名で検索...' : '名前またはメールで検索...'}
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
           />
         </div>
         {type === 'orgs' ? (
           <button
             onClick={handleOpenAddOrgModal}
-            className="ml-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             新規法人を追加
           </button>
         ) : (
           <button
             onClick={handleOpenAddUserModal}
-            className="ml-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             ユーザーを招待
           </button>
         )}
       </div>
 
-      <div className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
               {type === 'orgs' ? (
                 <>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロゴ</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">法人名</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">登録日</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">メンバー数</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">平均スコア</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロゴ</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">法人名</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">登録日</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">メンバー数</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">平均スコア</th>
                 </>
               ) : (
                 <>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">氏名</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">メールアドレス</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロール</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">所属法人ID</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">氏名</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">メールアドレス</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロール</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">所属法人ID</th>
                 </>
               )}
-              <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">アクション</th>
+              <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">アクション</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-200">
             {type === 'orgs' ? (
               orgs.map((org) => (
                 <tr key={org.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     {org.logo ? (
                       <img
                         src={org.logo}
                         alt={org.name}
-                        className="w-10 h-10 object-contain rounded border border-slate-200 bg-white"
+                        className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded border border-slate-200 bg-white"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded border border-slate-200 bg-slate-100 flex items-center justify-center">
-                        <span className="text-slate-400 text-lg">🏢</span>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded border border-slate-200 bg-slate-100 flex items-center justify-center">
+                        <span className="text-slate-400 text-base sm:text-lg">🏢</span>
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{org.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{org.createdAt}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{org.memberCount} 名</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{org.name}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{org.createdAt}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500">{org.memberCount} 名</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                     <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${org.avgScore > 70 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
                       {org.avgScore}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button 
-                      onClick={() => handleOpenTenantLogin(org)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4 font-bold bg-indigo-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      ログインページへ飛ぶ
-                    </button>
-                    <button 
-                      onClick={() => handleOpenRankDefinitionEditor(org)}
-                      className="text-purple-600 hover:text-purple-900 mr-4"
-                      title="ランク定義を編集"
-                    >
-                      ランク定義
-                    </button>
-                    <button 
-                      onClick={() => handleOpenEditOrgModal(org)}
-                      className="text-slate-400 hover:text-indigo-600 mr-4"
-                    >
-                      編集
-                    </button>
-                    <button onClick={(e) => handleDeleteOrg(org.id, e)} className="text-red-400 hover:text-red-600">削除</button>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex flex-wrap justify-end gap-1 sm:gap-2">
+                      <button 
+                        onClick={() => handleOpenTenantLogin(org)}
+                        className="text-indigo-600 hover:text-indigo-900 text-xs sm:text-sm font-bold bg-indigo-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-block"
+                        title="ログインページへ飛ぶ"
+                      >
+                        ログイン
+                      </button>
+                      <button 
+                        onClick={() => handleOpenRankDefinitionEditor(org)}
+                        className="text-purple-600 hover:text-purple-900 text-xs"
+                        title="ランク定義を編集"
+                      >
+                        ランク
+                      </button>
+                      <button 
+                        onClick={() => handleOpenEditOrgModal(org)}
+                        className="text-slate-400 hover:text-indigo-600 text-xs"
+                      >
+                        編集
+                      </button>
+                      <button onClick={(e) => handleDeleteOrg(org.id, e)} className="text-red-400 hover:text-red-600 text-xs">削除</button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -275,16 +278,16 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                 
                 return filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs text-slate-500">
                         {user.name.charAt(0)}
                       </div>
-                      <div className="ml-3 text-sm font-medium text-slate-900">{user.name}</div>
+                      <div className="ml-2 sm:ml-3 text-sm font-medium text-slate-900 truncate">{user.name}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell truncate max-w-xs">{user.email}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-0.5 text-xs font-medium rounded-md ${
                       user.role === Role.SUPER_ADMIN ? 'bg-purple-100 text-purple-800' : 
                       user.role === Role.ORG_ADMIN ? 'bg-blue-100 text-blue-800' : 
@@ -293,15 +296,17 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{user.orgId}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button 
-                      onClick={() => handleOpenEditUserModal(user)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      編集
-                    </button>
-                    <button onClick={(e) => handleDeleteUser(user.id, e)} className="text-red-400 hover:text-red-600">削除</button>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell truncate">{user.orgId}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button 
+                        onClick={() => handleOpenEditUserModal(user)}
+                        className="text-indigo-600 hover:text-indigo-900 text-xs"
+                      >
+                        編集
+                      </button>
+                      <button onClick={(e) => handleDeleteUser(user.id, e)} className="text-red-400 hover:text-red-600 text-xs">削除</button>
+                    </div>
                   </td>
                 </tr>
                 ));

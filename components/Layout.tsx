@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Organization } from '../types';
 
 interface LayoutProps {
@@ -12,11 +12,22 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, onNavigate, activeView }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
         <div className="p-6 border-b border-slate-800">
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
             AI Literacy Hub
@@ -26,7 +37,10 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
 
         <nav className="flex-1 mt-6 px-4 space-y-1">
           <button
-            onClick={() => onNavigate('dashboard')}
+            onClick={() => {
+              onNavigate('dashboard');
+              setIsMobileMenuOpen(false);
+            }}
             className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'dashboard' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
           >
             <span className="mr-3">📊</span>
@@ -34,7 +48,10 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
           </button>
 
           <button
-            onClick={() => onNavigate('surveys')}
+            onClick={() => {
+              onNavigate('surveys');
+              setIsMobileMenuOpen(false);
+            }}
             className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'surveys' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
           >
             <span className="mr-3">📝</span>
@@ -42,7 +59,10 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
           </button>
 
           <button
-            onClick={() => onNavigate('rankDefinition')}
+            onClick={() => {
+              onNavigate('rankDefinition');
+              setIsMobileMenuOpen(false);
+            }}
             className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'rankDefinition' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
           >
             <span className="mr-3">⭐</span>
@@ -50,7 +70,10 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
           </button>
 
           <button
-            onClick={() => onNavigate('growth')}
+            onClick={() => {
+              onNavigate('growth');
+              setIsMobileMenuOpen(false);
+            }}
             className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'growth' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
           >
             <span className="mr-3">📈</span>
@@ -59,7 +82,10 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
 
           {isSuperAdmin && (
             <button
-              onClick={() => onNavigate('orgs')}
+              onClick={() => {
+                onNavigate('orgs');
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'orgs' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
             >
               <span className="mr-3">🏢</span>
@@ -79,7 +105,10 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
             </div>
           </div>
           <button
-            onClick={onLogout}
+            onClick={() => {
+              onLogout();
+              setIsMobileMenuOpen(false);
+            }}
             className="w-full py-2 px-4 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-all text-sm"
           >
             ログアウト
@@ -88,22 +117,34 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-10">
-          <h2 className="text-lg font-semibold text-slate-800">
+      <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+        <header className="h-16 bg-white border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              aria-label="メニューを開く"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h2 className="text-base lg:text-lg font-semibold text-slate-800">
             {activeView === 'dashboard' && '分析ダッシュボード'}
             {activeView === 'surveys' && 'アンケート管理'}
             {activeView === 'rankDefinition' && 'ランク定義設定'}
             {activeView === 'growth' && '回答者別成長率分析'}
             {activeView === 'orgs' && '法人アカウント管理'}
-          </h2>
-          <div className="flex items-center space-x-4">
-            <div className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+            </h2>
+          </div>
+          <div className="flex items-center space-x-2 lg:space-x-4">
+            <div className="text-xs font-medium px-2 lg:px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap">
               {isSuperAdmin ? 'システム管理者' : '法人アカウント'}
             </div>
           </div>
         </header>
-        <div className="p-8">
+        <div className="p-4 lg:p-8">
           {children}
         </div>
       </main>

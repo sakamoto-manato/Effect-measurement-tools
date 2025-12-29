@@ -207,18 +207,18 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">ランク推移</h2>
-          <p className="text-slate-600">社員のAI活用レベルの変化を追跡</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">ランク推移</h2>
+          <p className="text-sm sm:text-base text-slate-600">社員のAI活用レベルの変化を追跡</p>
         </div>
         {isSuperAdmin && organizations && organizations.length > 0 && (
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700">法人を選択:</label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <label className="text-sm font-medium text-slate-700 whitespace-nowrap">法人を選択:</label>
             <select
               value={viewingOrg?.id || ''}
               onChange={handleOrgChange}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900 min-w-[300px]"
+              className="w-full sm:w-auto px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900"
             >
               <option value="">すべての法人</option>
               {organizations.map(org => (
@@ -233,7 +233,7 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
                   onSelectOrg?.(null);
                   onClearView?.();
                 }}
-                className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-300 rounded-lg hover:bg-slate-50"
+                className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-300 rounded-lg hover:bg-slate-50 whitespace-nowrap"
               >
                 クリア
               </button>
@@ -251,41 +251,41 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
       )}
 
       {/* ランクサマリーカード */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600 text-xl">↑</span>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-blue-600 text-lg sm:text-xl">↑</span>
             </div>
             <div>
-              <p className="text-sm text-slate-600">ランクアップ</p>
-              <p className="text-2xl font-bold text-slate-800">{rankStats.rankUp}名</p>
+              <p className="text-xs sm:text-sm text-slate-600">ランクアップ</p>
+              <p className="text-xl sm:text-2xl font-bold text-slate-800">{rankStats.rankUp}名</p>
             </div>
           </div>
           <p className="text-xs text-slate-500">前期比</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-              <span className="text-slate-600 text-xl">—</span>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-slate-600 text-lg sm:text-xl">—</span>
             </div>
             <div>
-              <p className="text-sm text-slate-600">維持</p>
-              <p className="text-2xl font-bold text-slate-800">{rankStats.maintain}名</p>
+              <p className="text-xs sm:text-sm text-slate-600">維持</p>
+              <p className="text-xl sm:text-2xl font-bold text-slate-800">{rankStats.maintain}名</p>
             </div>
           </div>
           <p className="text-xs text-slate-500">安定した活用</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <span className="text-red-600 text-xl">↓</span>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-red-600 text-lg sm:text-xl">↓</span>
             </div>
             <div>
-              <p className="text-sm text-slate-600">ランクダウン</p>
-              <p className="text-2xl font-bold text-slate-800">{rankStats.rankDown}名</p>
+              <p className="text-xs sm:text-sm text-slate-600">ランクダウン</p>
+              <p className="text-xl sm:text-2xl font-bold text-slate-800">{rankStats.rankDown}名</p>
             </div>
           </div>
           <p className="text-xs text-slate-500">要フォローアップ</p>
@@ -294,8 +294,8 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
 
       {/* 法人全体の平均スコア推移 */}
       {orgAverageTrend.length > 0 && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">
             {(viewingOrg || org).name} の全体推移（平均スコア）
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -331,8 +331,8 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
       {/* 最近のランク変動 */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
         <div className="mb-4">
-          <h3 className="text-lg font-bold text-slate-800 mb-1">最近のランク変動</h3>
-          <p className="text-sm text-slate-600">直近のアンケート結果に基づく変化</p>
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-1">最近のランク変動</h3>
+          <p className="text-xs sm:text-sm text-slate-600">直近のアンケート結果に基づく変化</p>
         </div>
         
         {rankChanges.length > 0 ? (
@@ -407,7 +407,7 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
       {/* 回答者別成長率一覧 */}
       {respondentStats.length > 0 && (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">全回答者の成長率</h3>
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">全回答者の成長率</h3>
           <div className="overflow-x-auto">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={respondentStats.sort((a, b) => b.growthRate - a.growthRate)}>
@@ -458,7 +458,7 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
               <h4 className="text-md font-semibold text-slate-700 mb-4">
                 {selectedRespondent} の成長サマリー
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-lg border border-indigo-100">
                   <p className="text-xs text-slate-600 mb-1">初回スコア</p>
                   <p className="text-2xl font-bold text-slate-800">

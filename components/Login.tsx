@@ -67,17 +67,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4 sm:p-6">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-8 border-t-4 border-indigo-600">
-          <div className="text-center mb-10">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-6 sm:p-8 border-t-4 border-indigo-600">
+          <div className="text-center mb-8 sm:mb-10">
             {tenantOrg ? (
               <>
                 <div className="inline-block p-3 rounded-xl bg-indigo-50 text-indigo-600 mb-4">
-                  <span className="text-2xl font-bold">🏢</span>
+                  <span className="text-xl sm:text-2xl font-bold">🏢</span>
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 mb-1">{tenantOrg.name}</h1>
-                <p className="text-slate-500 text-sm">AIリテラシー・ダッシュボード ログイン</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">{tenantOrg.name}</h1>
+                <p className="text-slate-500 text-xs sm:text-sm">AIリテラシー・ダッシュボード ログイン</p>
                 <button 
                   onClick={clearTenant}
                   className="mt-2 text-[10px] text-slate-400 hover:text-indigo-600 font-bold uppercase tracking-widest"
@@ -87,8 +87,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </>
             ) : (
               <>
-                <h1 className="text-3xl font-extrabold text-slate-900 mb-2">AI Literacy Hub</h1>
-                <p className="text-slate-500">法人アカウントでログインしてください</p>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">AI Literacy Hub</h1>
+                <p className="text-slate-500 text-sm sm:text-base">法人アカウントでログインしてください</p>
               </>
             )}
           </div>
