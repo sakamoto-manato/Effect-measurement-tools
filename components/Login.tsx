@@ -76,8 +76,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className="inline-block p-3 rounded-xl bg-indigo-50 text-indigo-600 mb-4">
                   <span className="text-xl sm:text-2xl font-bold">🏢</span>
                 </div>
+                <div className="flex justify-center mb-3">
+                  <img src="/EffiQ-logo.png" alt="EffiQ" className="h-8 sm:h-10 w-auto" />
+                </div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">{tenantOrg.name}</h1>
-                <p className="text-slate-500 text-xs sm:text-sm">AIリテラシー・ダッシュボード ログイン</p>
+                <p className="text-slate-500 text-xs sm:text-sm">EffiQ ログイン</p>
                 <button 
                   onClick={clearTenant}
                   className="mt-2 text-[10px] text-slate-400 hover:text-indigo-600 font-bold uppercase tracking-widest"
@@ -87,7 +90,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </>
             ) : (
               <>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">AI Literacy Hub</h1>
+                <div className="flex justify-center mb-4">
+                  <img src="/EffiQ-logo.png" alt="EffiQ" className="h-12 sm:h-16 w-auto" />
+                </div>
                 <p className="text-slate-500 text-sm sm:text-base">法人アカウントでログインしてください</p>
               </>
             )}
@@ -169,7 +174,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         </div>
         <p className="mt-8 text-center text-slate-400 text-sm">
-          &copy; 2024 AI Literacy Solutions Inc.
+          &copy; 2024 EffiQ
         </p>
       </div>
     </div>
