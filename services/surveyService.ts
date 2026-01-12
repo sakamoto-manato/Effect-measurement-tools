@@ -1,4 +1,5 @@
-import { Survey } from '../types';
+import { Survey, Question } from '../types';
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY_PREFIX = 'surveys_';
 
@@ -77,5 +78,78 @@ export function deleteSurvey(surveyId: string, orgId: string): void {
   const surveys = getSurveysByOrg(orgId);
   const updatedSurveys = surveys.filter(s => s.id !== surveyId);
   saveSurveys(orgId, updatedSurveys);
+}
+
+/**
+ * Supabaseから法人別のアンケート一覧を取得
+ */
+export async function getSurveysByOrgFromSupabase(orgId: string): Promise<Survey[]> {
+  try {
+    const { data, error } = await supabase
+      .from('surveys')
+      .select('*')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('アンケートデータの取得に失敗しました:', error);
+      return [];
+    }
+
+    if (!data) return [];
+
+    // データベースの形式をアプリケーションの形式に変換
+    return data.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description || '',
+      questions: (row.questions as any) || [],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      isActive: row.is_active ?? true,
+      createdBy: row.created_by,
+      orgId: row.organization_id,
+    }));
+  } catch (error) {
+    console.error('アンケートデータの取得中にエラーが発生しました:', error);
+    return [];
+  }
+}
+
+/**
+ * SupabaseからアンケートIDでアンケートを取得
+ */
+export async function getSurveyByIdFromSupabase(surveyId: string, orgId: string): Promise<Survey | null> {
+  try {
+    const { data, error } = await supabase
+      .from('surveys')
+      .select('*')
+      .eq('id', surveyId)
+      .eq('organization_id', orgId)
+      .single();
+
+    if (error) {
+      console.error('アンケートデータの取得に失敗しました:', error);
+      return null;
+    }
+
+    if (!data) return null;
+
+    // データベースの形式をアプリケーションの形式に変換
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description || '',
+      questions: (data.questions as any) || [],
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      isActive: data.is_active ?? true,
+      createdBy: data.created_by,
+      orgId: data.organization_id,
+    };
+  } catch (error) {
+    console.error('アンケートデータの取得中にエラーが発生しました:', error);
+    return null;
+  }
 }
 

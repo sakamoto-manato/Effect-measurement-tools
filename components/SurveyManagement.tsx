@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Survey, Question, QuestionOption, Role, QuestionType, SurveyResponse } from '../types';
 import SurveyEditor from './SurveyEditor';
 import SurveyResponseForm from './SurveyResponseForm';
-import { saveSurveys, getSurveysByOrg } from '../services/surveyService';
+import { saveSurveys, getSurveysByOrg, getSurveysByOrgFromSupabase } from '../services/surveyService';
 import { getResponsesBySurveyFromSupabase } from '../services/surveyResponseService';
 
 interface SurveyManagementProps {
@@ -168,30 +168,51 @@ const DEFAULT_SURVEY_QUESTIONS: Question[] = [
 ];
 
 const SurveyManagement: React.FC<SurveyManagementProps> = ({ userRole, orgId }) => {
-  // localStorageからアンケートデータを読み込む
-  const loadSurveys = (): Survey[] => {
-    const loadedSurveys = getSurveysByOrg(orgId);
-    if (loadedSurveys.length > 0) {
-      return loadedSurveys;
-    }
-    // デフォルトデータ
-    const defaultSurvey: Survey = {
-      id: 'survey-1',
-      title: 'AI活用状況アンケート',
-      description: 'AIツールの利用状況や活用レベルを調査するアンケートです。',
-      questions: DEFAULT_SURVEY_QUESTIONS,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isActive: true,
-      createdBy: orgId,
-      orgId: orgId,
-    };
-    // 初期データをlocalStorageに保存
-    saveSurveys(orgId, [defaultSurvey]);
-    return [defaultSurvey];
-  };
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [loadingSurveys, setLoadingSurveys] = useState(true);
 
-  const [surveys, setSurveys] = useState<Survey[]>(loadSurveys());
+  // Supabaseからアンケートデータを読み込む
+  useEffect(() => {
+    const loadSurveys = async () => {
+      setLoadingSurveys(true);
+      try {
+        // まずSupabaseから取得を試みる
+        const supabaseSurveys = await getSurveysByOrgFromSupabase(orgId);
+        if (supabaseSurveys.length > 0) {
+          setSurveys(supabaseSurveys);
+        } else {
+          // Supabaseにデータがない場合はlocalStorageから取得
+          const localStorageSurveys = getSurveysByOrg(orgId);
+          if (localStorageSurveys.length > 0) {
+            setSurveys(localStorageSurveys);
+          } else {
+            // デフォルトデータ
+            const defaultSurvey: Survey = {
+              id: 'survey-1',
+              title: 'AI活用状況アンケート',
+              description: 'AIツールの利用状況や活用レベルを調査するアンケートです。',
+              questions: DEFAULT_SURVEY_QUESTIONS,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              isActive: true,
+              createdBy: orgId,
+              orgId: orgId,
+            };
+            setSurveys([defaultSurvey]);
+            saveSurveys(orgId, [defaultSurvey]);
+          }
+        }
+      } catch (error) {
+        console.error('アンケートデータの読み込みに失敗しました:', error);
+        // エラー時はlocalStorageから取得
+        const localStorageSurveys = getSurveysByOrg(orgId);
+        setSurveys(localStorageSurveys.length > 0 ? localStorageSurveys : []);
+      } finally {
+        setLoadingSurveys(false);
+      }
+    };
+    loadSurveys();
+  }, [orgId]);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [responseCounts, setResponseCounts] = useState<Record<string, number>>({});
 
@@ -611,10 +632,12 @@ const SurveyManagement: React.FC<SurveyManagementProps> = ({ userRole, orgId }) 
   };
 
   const handleViewResponses = async (survey: Survey) => {
+    console.log('回答結果を表示:', { surveyId: survey.id, surveyTitle: survey.title, orgId });
     setViewingResponses(survey);
     setLoadingResponses(true);
     try {
       const surveyResponses = await getResponsesBySurveyFromSupabase(survey.id, orgId);
+      console.log('取得した回答数:', surveyResponses.length);
       setResponses(surveyResponses);
     } catch (error) {
       console.error('回答データの取得に失敗しました:', error);
@@ -649,6 +672,22 @@ const SurveyManagement: React.FC<SurveyManagementProps> = ({ userRole, orgId }) 
         onSave={handleSaveFromEditor}
         onCancel={handleCancelEditor}
       />
+    );
+  }
+
+  if (loadingSurveys) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">アンケート管理</h2>
+            <p className="text-sm sm:text-base text-slate-600">アンケートの作成・編集</p>
+          </div>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-slate-600">読み込み中...</p>
+        </div>
+      </div>
     );
   }
 
@@ -1067,8 +1106,17 @@ const SurveyManagement: React.FC<SurveyManagementProps> = ({ userRole, orgId }) 
                 <p className="text-slate-600">読み込み中...</p>
               </div>
             ) : responses.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-8 space-y-2">
                 <p className="text-slate-600">まだ回答がありません。</p>
+                <p className="text-xs text-slate-400">
+                  アンケートID: {viewingResponses.id}
+                </p>
+                <p className="text-xs text-slate-400">
+                  法人ID: {orgId}
+                </p>
+                <p className="text-xs text-slate-400 mt-4">
+                  ※ ブラウザのコンソール（F12）で詳細なデバッグ情報を確認できます
+                </p>
               </div>
             ) : (
               <div className="space-y-4">

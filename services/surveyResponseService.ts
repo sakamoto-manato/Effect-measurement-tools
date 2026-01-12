@@ -92,6 +92,8 @@ export async function getResponsesBySurveyFromAPI(surveyId: string, orgId: strin
  */
 export async function getResponsesBySurveyFromSupabase(surveyId: string, orgId: string): Promise<SurveyResponse[]> {
   try {
+    console.log('回答データ取得開始:', { surveyId, orgId });
+    
     const { data, error } = await supabase
       .from('survey_responses')
       .select('*')
@@ -101,10 +103,27 @@ export async function getResponsesBySurveyFromSupabase(surveyId: string, orgId: 
 
     if (error) {
       console.error('回答データの取得に失敗しました:', error);
+      console.error('エラー詳細:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
       return [];
     }
 
-    if (!data) return [];
+    console.log('取得した回答データ:', data);
+
+    if (!data || data.length === 0) {
+      console.log('回答データが見つかりませんでした。survey_idとorganization_idを確認してください。');
+      // デバッグ用: すべての回答データを取得して確認
+      const { data: allData } = await supabase
+        .from('survey_responses')
+        .select('survey_id, organization_id, respondent_name')
+        .limit(10);
+      console.log('データベース内の回答データ（最初の10件）:', allData);
+      return [];
+    }
 
     // データベースの形式をアプリケーションの形式に変換
     return data.map((row: any) => ({
