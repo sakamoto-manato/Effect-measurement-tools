@@ -6,6 +6,13 @@ import { Organization } from '../types';
  */
 export async function getOrganizations(): Promise<Organization[]> {
   try {
+    // 環境変数が設定されていない場合は空配列を返す
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    if (!supabaseUrl) {
+      console.warn('Supabase環境変数が設定されていないため、空の配列を返します。');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('organizations')
       .select('*')
@@ -13,7 +20,7 @@ export async function getOrganizations(): Promise<Organization[]> {
 
     if (error) {
       console.error('法人一覧の取得エラー:', error);
-      throw error;
+      return []; // エラー時は空配列を返す
     }
 
     // SupabaseのデータをOrganization型に変換
@@ -38,6 +45,12 @@ export async function getOrganizations(): Promise<Organization[]> {
  */
 export async function getOrganizationById(id: string): Promise<Organization | null> {
   try {
+    // 環境変数が設定されていない場合はnullを返す
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    if (!supabaseUrl) {
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('organizations')
       .select('*')
@@ -71,6 +84,12 @@ export async function getOrganizationById(id: string): Promise<Organization | nu
  */
 export async function getOrganizationBySlug(slug: string): Promise<Organization | null> {
   try {
+    // 環境変数が設定されていない場合はnullを返す
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    if (!supabaseUrl) {
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('organizations')
       .select('*')
@@ -106,6 +125,12 @@ export async function createOrganization(
   orgData: Omit<Organization, 'id' | 'createdAt' | 'memberCount' | 'avgScore'>
 ): Promise<Organization | null> {
   try {
+    // 環境変数が設定されていない場合はエラーを投げる
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    if (!supabaseUrl) {
+      throw new Error('Supabase環境変数が設定されていません。');
+    }
+
     const { data, error } = await supabase
       .from('organizations')
       .insert({
@@ -153,6 +178,12 @@ export async function updateOrganization(
   orgData: Partial<Omit<Organization, 'id' | 'createdAt' | 'memberCount' | 'avgScore'>>
 ): Promise<Organization | null> {
   try {
+    // 環境変数が設定されていない場合はエラーを投げる
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    if (!supabaseUrl) {
+      throw new Error('Supabase環境変数が設定されていません。');
+    }
+
     const updateData: any = {
       updated_at: new Date().toISOString(),
     };
@@ -194,6 +225,12 @@ export async function updateOrganization(
  */
 export async function deleteOrganization(id: string): Promise<boolean> {
   try {
+    // 環境変数が設定されていない場合はエラーを投げる
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    if (!supabaseUrl) {
+      throw new Error('Supabase環境変数が設定されていません。');
+    }
+
     const { error } = await supabase
       .from('organizations')
       .delete()
@@ -216,6 +253,13 @@ export async function deleteOrganization(id: string): Promise<boolean> {
  */
 export async function checkSlugAvailability(slug: string, excludeId?: string): Promise<boolean> {
   try {
+    // 環境変数が設定されていない場合はtrueを返す（チェックをスキップ）
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    if (!supabaseUrl) {
+      console.warn('Supabase環境変数が設定されていないため、Slugの重複チェックをスキップします。');
+      return true;
+    }
+
     let query = supabase
       .from('organizations')
       .select('id')

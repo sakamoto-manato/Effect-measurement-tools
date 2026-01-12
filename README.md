@@ -62,3 +62,47 @@ View your app in AI Studio: https://ai.studio/apps/drive/1V1rsfQPwcJWiOlcAoa2xrX
 ### データベーススキーマ
 
 詳細なスキーマ定義は、プロジェクトルートのSQLファイルを参照してください。
+
+## Vercelへのデプロイ
+
+### デプロイ手順
+
+1. **Vercelプロジェクトの作成**
+   - Vercelダッシュボード（https://vercel.com）にログイン
+   - 新しいプロジェクトを作成し、GitHubリポジトリを接続
+
+2. **環境変数の設定**
+   
+   Vercelダッシュボードの「Settings」→「Environment Variables」で以下の環境変数を設定してください：
+   
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   GEMINI_API_KEY=your_gemini_api_key
+   ```
+   
+   **重要**: 環境変数名は`VITE_`で始まる必要があります（Viteのビルド時にクライアント側で使用可能にするため）
+
+3. **デプロイ**
+   - 環境変数を設定後、自動的に再デプロイされます
+   - または、手動で「Deployments」タブから再デプロイを実行
+
+### トラブルシューティング
+
+**空白ページが表示される場合:**
+
+1. **環境変数の確認**
+   - Vercelダッシュボードで環境変数が正しく設定されているか確認
+   - 環境変数名が`VITE_`で始まっているか確認
+
+2. **ビルドログの確認**
+   - Vercelダッシュボードの「Deployments」→ 該当デプロイ → 「Build Logs」を確認
+   - エラーメッセージがないか確認
+
+3. **ブラウザのコンソール確認**
+   - ブラウザの開発者ツール（F12）を開き、「Console」タブでエラーを確認
+   - ネットワークエラーやJavaScriptエラーがないか確認
+
+4. **Supabase環境変数の確認**
+   - Supabase環境変数が設定されていない場合でも、アプリは動作します（MOCK_ORGSを使用）
+   - ただし、Supabase連携機能は使用できません
