@@ -42,6 +42,8 @@ export interface User {
   pendingPassword?: boolean; // パスワード設定待ちかどうか
   invitationToken?: string; // 招待トークン
   invitationExpiresAt?: string; // 招待トークンの有効期限
+  department?: string; // 部署
+  position?: string; // 役職
 }
 
 export interface AuthState {

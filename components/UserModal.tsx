@@ -17,6 +17,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, or
     email: '',
     role: Role.USER,
     orgId: orgId || '',
+    department: '',
+    position: '',
   });
 
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -31,6 +33,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, or
         email: user.email || '',
         role: user.role || Role.USER,
         orgId: user.orgId || orgId || '',
+        department: user.department || '',
+        position: user.position || '',
       });
       setEmailSent(false);
       setEmailError('');
@@ -41,6 +45,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, or
         email: '',
         role: Role.USER,
         orgId: orgId || '',
+        department: '',
+        position: '',
       });
       setEmailSent(false);
       setEmailError('');
@@ -89,6 +95,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, or
         pendingPassword: true,
         invitationToken,
         invitationExpiresAt: expiresAt.toISOString(),
+        department: formData.department.trim() || undefined,
+        position: formData.position.trim() || undefined,
       };
 
       const org = MOCK_ORGS.find(o => o.id === formData.orgId);
@@ -115,6 +123,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, or
         email: formData.email.trim(),
         role: formData.role,
         orgId: formData.orgId,
+        department: formData.department.trim() || undefined,
+        position: formData.position.trim() || undefined,
       };
       onSave(updatedUser);
       onClose();
@@ -235,6 +245,36 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, or
                       この法人のメンバーとして追加されます
                     </p>
                   )}
+                </div>
+
+                {/* 部署と役職 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      部署
+                    </label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                      placeholder="例: IT企画部"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      役職
+                    </label>
+                    <input
+                      type="text"
+                      name="position"
+                      value={formData.position}
+                      onChange={handleInputChange}
+                      placeholder="例: 部長"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                    />
+                  </div>
                 </div>
 
                 {/* メール送信状態 */}

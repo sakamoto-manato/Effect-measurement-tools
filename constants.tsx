@@ -66,7 +66,9 @@ export const MOCK_USERS: User[] = [
     role: Role.ORG_ADMIN,
     orgId: 'org-1',
     scores: { basics: 70, prompting: 60, ethics: 50, tools: 65, automation: 40 },
-    pendingPassword: false
+    pendingPassword: false,
+    department: 'IT企画部',
+    position: '部長'
   },
   {
     id: 'u-2',
@@ -75,7 +77,9 @@ export const MOCK_USERS: User[] = [
     role: Role.USER,
     orgId: 'org-1',
     scores: { basics: 45, prompting: 30, ethics: 70, tools: 40, automation: 20 },
-    pendingPassword: false
+    pendingPassword: false,
+    department: '開発部',
+    position: '主任'
   }
 ];
 

@@ -245,6 +245,8 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">氏名</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">メールアドレス</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロール</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">部署</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">役職</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">所属法人ID</th>
                 </>
               )}
@@ -350,6 +352,8 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                       {user.role}
                     </span>
                   </td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{user.department || '-'}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{user.position || '-'}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell truncate">{user.orgId}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex flex-wrap justify-end gap-2">
