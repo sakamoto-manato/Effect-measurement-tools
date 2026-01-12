@@ -20,6 +20,8 @@ VALUES (
   'AIツールの利用状況や活用レベルを調査するアンケートです。',
   '[
     {"id": "q-name-default", "title": "名前", "type": "text", "required": true, "placeholder": "お名前を入力してください"},
+    {"id": "q-department", "title": "所属部署", "type": "radio", "required": false, "options": [{"id": "opt-dept-1", "label": "営業部", "value": "sales"}, {"id": "opt-dept-2", "label": "開発部", "value": "development"}, {"id": "opt-dept-3", "label": "マーケティング部", "value": "marketing"}, {"id": "opt-dept-4", "label": "人事部", "value": "hr"}, {"id": "opt-dept-5", "label": "経理部", "value": "accounting"}, {"id": "opt-dept-6", "label": "その他", "value": "other"}]},
+    {"id": "q-position", "title": "役職", "type": "radio", "required": false, "options": [{"id": "opt-pos-1", "label": "部長", "value": "director"}, {"id": "opt-pos-2", "label": "課長", "value": "manager"}, {"id": "opt-pos-3", "label": "主任", "value": "senior"}, {"id": "opt-pos-4", "label": "一般社員", "value": "staff"}, {"id": "opt-pos-5", "label": "その他", "value": "other"}]},
     {"id": "q1", "title": "AI活用の有無", "type": "radio", "required": true, "options": [{"id": "opt1-1", "label": "① ほぼ毎日使っている", "value": "daily"}, {"id": "opt1-2", "label": "② 週に数回使っている", "value": "weekly"}, {"id": "opt1-3", "label": "③ 月に数回使っている", "value": "monthly"}, {"id": "opt1-4", "label": "④ 使ったことはあるが、今は使っていない", "value": "used_before"}, {"id": "opt1-5", "label": "⑤ 使ったことがない", "value": "never"}]},
     {"id": "q2", "title": "主に利用しているAIツール（複数選択可）", "type": "checkbox", "required": false, "options": [{"id": "opt2-1", "label": "ChatGPT", "value": "chatgpt"}, {"id": "opt2-2", "label": "Claude", "value": "claude"}, {"id": "opt2-3", "label": "Gemini", "value": "gemini"}]},
     {"id": "q3", "title": "有料AIツールの利用状況", "type": "radio", "required": false, "options": [{"id": "opt3-1", "label": "① 個人で契約している", "value": "personal"}, {"id": "opt3-2", "label": "② 会社の補助で利用している", "value": "company_subsidy"}, {"id": "opt3-3", "label": "③ 無料版のみ使っている", "value": "free_only"}]},
@@ -42,6 +44,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440001'::uuid,
   '[
     {"questionId": "q-name-default", "value": "田中 健一", "type": "text"},
+    {"questionId": "q-department", "value": "development", "type": "radio"},
+    {"questionId": "q-position", "value": "director", "type": "radio"},
     {"questionId": "q1", "value": "daily", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt", "claude"], "type": "checkbox"},
     {"questionId": "q3", "value": "company_subsidy", "type": "radio"},
@@ -62,6 +66,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440001'::uuid,
   '[
     {"questionId": "q-name-default", "value": "鈴木 美咲", "type": "text"},
+    {"questionId": "q-department", "value": "marketing", "type": "radio"},
+    {"questionId": "q-position", "value": "manager", "type": "radio"},
     {"questionId": "q1", "value": "weekly", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt"], "type": "checkbox"},
     {"questionId": "q3", "value": "free_only", "type": "radio"},
@@ -82,6 +88,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440001'::uuid,
   '[
     {"questionId": "q-name-default", "value": "高橋 翔太", "type": "text"},
+    {"questionId": "q-department", "value": "development", "type": "radio"},
+    {"questionId": "q-position", "value": "senior", "type": "radio"},
     {"questionId": "q1", "value": "monthly", "type": "radio"},
     {"questionId": "q2", "value": ["gemini"], "type": "checkbox"},
     {"questionId": "q3", "value": "free_only", "type": "radio"},
@@ -102,6 +110,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440001'::uuid,
   '[
     {"questionId": "q-name-default", "value": "佐藤 花子", "type": "text"},
+    {"questionId": "q-department", "value": "sales", "type": "radio"},
+    {"questionId": "q-position", "value": "staff", "type": "radio"},
     {"questionId": "q1", "value": "used_before", "type": "radio"},
     {"questionId": "q2", "value": [], "type": "checkbox"},
     {"questionId": "q3", "value": "free_only", "type": "radio"},
@@ -122,6 +132,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440001'::uuid,
   '[
     {"questionId": "q-name-default", "value": "山田 次郎", "type": "text"},
+    {"questionId": "q-department", "value": "hr", "type": "radio"},
+    {"questionId": "q-position", "value": "staff", "type": "radio"},
     {"questionId": "q1", "value": "never", "type": "radio"},
     {"questionId": "q2", "value": [], "type": "checkbox"},
     {"questionId": "q3", "value": null, "type": "radio"},
@@ -146,6 +158,8 @@ VALUES (
   '社内でのAIツールの導入効果を測定するアンケートです。',
   '[
     {"id": "q-name-default", "title": "名前", "type": "text", "required": true, "placeholder": "お名前を入力してください"},
+    {"id": "q-department", "title": "所属部署", "type": "radio", "required": false, "options": [{"id": "opt-dept-1", "label": "営業部", "value": "sales"}, {"id": "opt-dept-2", "label": "開発部", "value": "development"}, {"id": "opt-dept-3", "label": "マーケティング部", "value": "marketing"}, {"id": "opt-dept-4", "label": "人事部", "value": "hr"}, {"id": "opt-dept-5", "label": "経理部", "value": "accounting"}, {"id": "opt-dept-6", "label": "その他", "value": "other"}]},
+    {"id": "q-position", "title": "役職", "type": "radio", "required": false, "options": [{"id": "opt-pos-1", "label": "部長", "value": "director"}, {"id": "opt-pos-2", "label": "課長", "value": "manager"}, {"id": "opt-pos-3", "label": "主任", "value": "senior"}, {"id": "opt-pos-4", "label": "一般社員", "value": "staff"}, {"id": "opt-pos-5", "label": "その他", "value": "other"}]},
     {"id": "q1", "title": "AI活用の有無", "type": "radio", "required": true, "options": [{"id": "opt1-1", "label": "① ほぼ毎日使っている", "value": "daily"}, {"id": "opt1-2", "label": "② 週に数回使っている", "value": "weekly"}, {"id": "opt1-3", "label": "③ 月に数回使っている", "value": "monthly"}, {"id": "opt1-4", "label": "④ 使ったことはあるが、今は使っていない", "value": "used_before"}, {"id": "opt1-5", "label": "⑤ 使ったことがない", "value": "never"}]},
     {"id": "q2", "title": "主に利用しているAIツール（複数選択可）", "type": "checkbox", "required": false, "options": [{"id": "opt2-1", "label": "ChatGPT", "value": "chatgpt"}, {"id": "opt2-2", "label": "Claude", "value": "claude"}, {"id": "opt2-3", "label": "Gemini", "value": "gemini"}]},
     {"id": "q3", "title": "有料AIツールの利用状況", "type": "radio", "required": false, "options": [{"id": "opt3-1", "label": "① 個人で契約している", "value": "personal"}, {"id": "opt3-2", "label": "② 会社の補助で利用している", "value": "company_subsidy"}, {"id": "opt3-3", "label": "③ 無料版のみ使っている", "value": "free_only"}]},
@@ -167,6 +181,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440002'::uuid,
   '[
     {"questionId": "q-name-default", "value": "伊藤 麻衣", "type": "text"},
+    {"questionId": "q-department", "value": "marketing", "type": "radio"},
+    {"questionId": "q-position", "value": "director", "type": "radio"},
     {"questionId": "q1", "value": "weekly", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt", "claude"], "type": "checkbox"},
     {"questionId": "q3", "value": "company_subsidy", "type": "radio"},
@@ -187,6 +203,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440002'::uuid,
   '[
     {"questionId": "q-name-default", "value": "渡辺 大輔", "type": "text"},
+    {"questionId": "q-department", "value": "sales", "type": "radio"},
+    {"questionId": "q-position", "value": "manager", "type": "radio"},
     {"questionId": "q1", "value": "monthly", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt"], "type": "checkbox"},
     {"questionId": "q3", "value": "free_only", "type": "radio"},
@@ -207,6 +225,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440002'::uuid,
   '[
     {"questionId": "q-name-default", "value": "中村 優香", "type": "text"},
+    {"questionId": "q-department", "value": "development", "type": "radio"},
+    {"questionId": "q-position", "value": "senior", "type": "radio"},
     {"questionId": "q1", "value": "used_before", "type": "radio"},
     {"questionId": "q2", "value": [], "type": "checkbox"},
     {"questionId": "q3", "value": "free_only", "type": "radio"},
@@ -227,6 +247,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440002'::uuid,
   '[
     {"questionId": "q-name-default", "value": "小林 健", "type": "text"},
+    {"questionId": "q-department", "value": "accounting", "type": "radio"},
+    {"questionId": "q-position", "value": "staff", "type": "radio"},
     {"questionId": "q1", "value": "used_before", "type": "radio"},
     {"questionId": "q2", "value": [], "type": "checkbox"},
     {"questionId": "q3", "value": null, "type": "radio"},
@@ -247,6 +269,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440002'::uuid,
   '[
     {"questionId": "q-name-default", "value": "加藤 さくら", "type": "text"},
+    {"questionId": "q-department", "value": "sales", "type": "radio"},
+    {"questionId": "q-position", "value": "staff", "type": "radio"},
     {"questionId": "q1", "value": "never", "type": "radio"},
     {"questionId": "q2", "value": [], "type": "checkbox"},
     {"questionId": "q3", "value": null, "type": "radio"},
@@ -271,6 +295,8 @@ VALUES (
   '社員のAI技術に関するスキルレベルを調査するアンケートです。',
   '[
     {"id": "q-name-default", "title": "名前", "type": "text", "required": true, "placeholder": "お名前を入力してください"},
+    {"id": "q-department", "title": "所属部署", "type": "radio", "required": false, "options": [{"id": "opt-dept-1", "label": "営業部", "value": "sales"}, {"id": "opt-dept-2", "label": "開発部", "value": "development"}, {"id": "opt-dept-3", "label": "マーケティング部", "value": "marketing"}, {"id": "opt-dept-4", "label": "人事部", "value": "hr"}, {"id": "opt-dept-5", "label": "経理部", "value": "accounting"}, {"id": "opt-dept-6", "label": "その他", "value": "other"}]},
+    {"id": "q-position", "title": "役職", "type": "radio", "required": false, "options": [{"id": "opt-pos-1", "label": "部長", "value": "director"}, {"id": "opt-pos-2", "label": "課長", "value": "manager"}, {"id": "opt-pos-3", "label": "主任", "value": "senior"}, {"id": "opt-pos-4", "label": "一般社員", "value": "staff"}, {"id": "opt-pos-5", "label": "その他", "value": "other"}]},
     {"id": "q1", "title": "AI活用の有無", "type": "radio", "required": true, "options": [{"id": "opt1-1", "label": "① ほぼ毎日使っている", "value": "daily"}, {"id": "opt1-2", "label": "② 週に数回使っている", "value": "weekly"}, {"id": "opt1-3", "label": "③ 月に数回使っている", "value": "monthly"}, {"id": "opt1-4", "label": "④ 使ったことはあるが、今は使っていない", "value": "used_before"}, {"id": "opt1-5", "label": "⑤ 使ったことがない", "value": "never"}]},
     {"id": "q2", "title": "主に利用しているAIツール（複数選択可）", "type": "checkbox", "required": false, "options": [{"id": "opt2-1", "label": "ChatGPT", "value": "chatgpt"}, {"id": "opt2-2", "label": "Claude", "value": "claude"}, {"id": "opt2-3", "label": "Gemini", "value": "gemini"}]},
     {"id": "q3", "title": "有料AIツールの利用状況", "type": "radio", "required": false, "options": [{"id": "opt3-1", "label": "① 個人で契約している", "value": "personal"}, {"id": "opt3-2", "label": "② 会社の補助で利用している", "value": "company_subsidy"}, {"id": "opt3-3", "label": "③ 無料版のみ使っている", "value": "free_only"}]},
@@ -292,6 +318,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440003'::uuid,
   '[
     {"questionId": "q-name-default", "value": "吉田 拓也", "type": "text"},
+    {"questionId": "q-department", "value": "development", "type": "radio"},
+    {"questionId": "q-position", "value": "director", "type": "radio"},
     {"questionId": "q1", "value": "daily", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt", "claude", "gemini"], "type": "checkbox"},
     {"questionId": "q3", "value": "personal", "type": "radio"},
@@ -312,6 +340,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440003'::uuid,
   '[
     {"questionId": "q-name-default", "value": "斉藤 彩", "type": "text"},
+    {"questionId": "q-department", "value": "development", "type": "radio"},
+    {"questionId": "q-position", "value": "manager", "type": "radio"},
     {"questionId": "q1", "value": "daily", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt", "claude"], "type": "checkbox"},
     {"questionId": "q3", "value": "company_subsidy", "type": "radio"},
@@ -332,6 +362,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440003'::uuid,
   '[
     {"questionId": "q-name-default", "value": "松本 亮", "type": "text"},
+    {"questionId": "q-department", "value": "development", "type": "radio"},
+    {"questionId": "q-position", "value": "senior", "type": "radio"},
     {"questionId": "q1", "value": "weekly", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt", "gemini"], "type": "checkbox"},
     {"questionId": "q3", "value": "company_subsidy", "type": "radio"},
@@ -352,6 +384,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440003'::uuid,
   '[
     {"questionId": "q-name-default", "value": "井上 由美", "type": "text"},
+    {"questionId": "q-department", "value": "marketing", "type": "radio"},
+    {"questionId": "q-position", "value": "staff", "type": "radio"},
     {"questionId": "q1", "value": "weekly", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt"], "type": "checkbox"},
     {"questionId": "q3", "value": "free_only", "type": "radio"},
@@ -372,6 +406,8 @@ SELECT
   '550e8400-e29b-41d4-a716-446655440003'::uuid,
   '[
     {"questionId": "q-name-default", "value": "木村 達也", "type": "text"},
+    {"questionId": "q-department", "value": "development", "type": "radio"},
+    {"questionId": "q-position", "value": "staff", "type": "radio"},
     {"questionId": "q1", "value": "monthly", "type": "radio"},
     {"questionId": "q2", "value": ["chatgpt"], "type": "checkbox"},
     {"questionId": "q3", "value": "free_only", "type": "radio"},

@@ -20,6 +20,33 @@ const DEFAULT_SURVEY_QUESTIONS: Question[] = [
     placeholder: 'お名前を入力してください',
   },
   {
+    id: 'q-department',
+    title: '所属部署',
+    type: 'radio',
+    required: false,
+    options: [
+      { id: 'opt-dept-1', label: '営業部', value: 'sales' },
+      { id: 'opt-dept-2', label: '開発部', value: 'development' },
+      { id: 'opt-dept-3', label: 'マーケティング部', value: 'marketing' },
+      { id: 'opt-dept-4', label: '人事部', value: 'hr' },
+      { id: 'opt-dept-5', label: '経理部', value: 'accounting' },
+      { id: 'opt-dept-6', label: 'その他', value: 'other' },
+    ],
+  },
+  {
+    id: 'q-position',
+    title: '役職',
+    type: 'radio',
+    required: false,
+    options: [
+      { id: 'opt-pos-1', label: '部長', value: 'director' },
+      { id: 'opt-pos-2', label: '課長', value: 'manager' },
+      { id: 'opt-pos-3', label: '主任', value: 'senior' },
+      { id: 'opt-pos-4', label: '一般社員', value: 'staff' },
+      { id: 'opt-pos-5', label: 'その他', value: 'other' },
+    ],
+  },
+  {
     id: 'q1',
     title: 'AI活用の有無',
     type: 'radio',

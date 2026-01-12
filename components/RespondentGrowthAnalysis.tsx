@@ -46,8 +46,8 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
   // 属性質問を特定する関数（部署、役職など）
   const identifyAttributeQuestions = useMemo(() => {
     const attributeKeywords = {
-      department: ['部署', 'department', '所属部署', '所属', '事業部'],
-      position: ['役職', 'position', '職位', '職種', '役割'],
+      department: ['部署', 'department', '所属部署', '所属', '事業部', '部', '課'],
+      position: ['役職', 'position', '職位', '職種', '役割', '職', '階級'],
     };
 
     const attributeQuestions: { [key: string]: { questionId: string; title: string; type: string } } = {};
@@ -55,12 +55,14 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     surveys.forEach(survey => {
       survey.questions.forEach(question => {
         const titleLower = question.title.toLowerCase();
+        const idLower = question.id.toLowerCase();
         
         // 部署関連の質問を検出
         if (attributeKeywords.department.some(keyword => 
           titleLower.includes(keyword.toLowerCase()) || 
-          question.id.toLowerCase().includes('department') ||
-          question.id.toLowerCase().includes('dept')
+          idLower.includes('department') ||
+          idLower.includes('dept') ||
+          idLower.includes('部署')
         )) {
           if (!attributeQuestions.department) {
             attributeQuestions.department = {
@@ -74,8 +76,9 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
         // 役職関連の質問を検出
         if (attributeKeywords.position.some(keyword => 
           titleLower.includes(keyword.toLowerCase()) || 
-          question.id.toLowerCase().includes('position') ||
-          question.id.toLowerCase().includes('role')
+          idLower.includes('position') ||
+          idLower.includes('role') ||
+          idLower.includes('役職')
         )) {
           if (!attributeQuestions.position) {
             attributeQuestions.position = {
@@ -216,11 +219,11 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
       });
     }
     
-    // 属性フィルタを適用
+    // 属性フィルタを適用（全体分析でも使用可能）
     filtered = applyAttributeFilters(filtered);
     
     return filtered;
-  }, [orgResponses, startDate, endDate, attributeFilters, identifyAttributeQuestions, surveys, applyAttributeFilters]);
+  }, [orgResponses, startDate, endDate, applyAttributeFilters]);
 
   // 回答データを取得（Supabaseから）
   useEffect(() => {
@@ -598,37 +601,53 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
         >
           全体分析
         </button>
-        {identifyAttributeQuestions.department && (
-          <button
-            onClick={() => {
-              setAnalysisView('department');
-              setAttributeFilters({});
-            }}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              analysisView === 'department'
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
-            }`}
-          >
-            部署別分析
-          </button>
-        )}
-        {identifyAttributeQuestions.position && (
-          <button
-            onClick={() => {
-              setAnalysisView('position');
-              setAttributeFilters({});
-            }}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              analysisView === 'position'
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
-            }`}
-          >
-            役職別分析
-          </button>
-        )}
+        <button
+          onClick={() => {
+            setAnalysisView('department');
+            setAttributeFilters({});
+          }}
+          disabled={!identifyAttributeQuestions.department}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            analysisView === 'department'
+              ? 'bg-indigo-600 text-white'
+              : identifyAttributeQuestions.department
+              ? 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+              : 'text-slate-400 cursor-not-allowed opacity-50'
+          }`}
+          title={!identifyAttributeQuestions.department ? '部署に関する質問がアンケートに含まれていません' : ''}
+        >
+          部署別分析
+        </button>
+        <button
+          onClick={() => {
+            setAnalysisView('position');
+            setAttributeFilters({});
+          }}
+          disabled={!identifyAttributeQuestions.position}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            analysisView === 'position'
+              ? 'bg-indigo-600 text-white'
+              : identifyAttributeQuestions.position
+              ? 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+              : 'text-slate-400 cursor-not-allowed opacity-50'
+          }`}
+          title={!identifyAttributeQuestions.position ? '役職に関する質問がアンケートに含まれていません' : ''}
+        >
+          役職別分析
+        </button>
       </div>
+      
+      {/* 属性質問が検出されない場合のメッセージ */}
+      {surveys.length > 0 && !identifyAttributeQuestions.department && !identifyAttributeQuestions.position && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-sm text-yellow-800">
+            <strong>注意:</strong> 部署や役職に関する質問がアンケートに含まれていないため、部署別・役職別分析は利用できません。
+          </p>
+          <p className="text-xs text-yellow-700 mt-2">
+            アンケート管理画面で、アンケートに「部署」や「役職」というキーワードを含む質問を追加すると、部署別・役職別分析が利用可能になります。
+          </p>
+        </div>
+      )}
 
       {/* フィルタセクション */}
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
@@ -667,11 +686,14 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
           </div>
         </div>
 
-        {/* 属性フィルタ */}
+        {/* 属性フィルタ（全体分析でも使用可能） */}
         {(identifyAttributeQuestions.department || identifyAttributeQuestions.position) && (
           <>
             <div className="border-t border-slate-200 pt-4">
               <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3">属性で絞り込み</h3>
+              <p className="text-xs text-slate-600 mb-3">
+                部署や役職でフィルタリングして、特定のグループの成長を分析できます
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {identifyAttributeQuestions.department && (
                   <div>
