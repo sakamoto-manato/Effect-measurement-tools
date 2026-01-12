@@ -431,6 +431,7 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
           onSave={handleSaveUser}
           user={editingUser}
           orgId={orgId}
+          organizations={orgs}
         />
       )}
 

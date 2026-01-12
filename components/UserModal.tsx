@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Role } from '../types';
+import { User, Role, Organization } from '../types';
 import { MOCK_ORGS } from '../constants';
 
 interface UserModalProps {
@@ -8,9 +8,10 @@ interface UserModalProps {
   onSave: (user: Omit<User, 'id' | 'scores'>) => void;
   user?: User | null; // 編集時は既存のユーザーデータ、新規追加時はnull
   orgId?: string; // 法人専用ダッシュボードの場合、所属法人IDを指定
+  organizations?: Organization[]; // 組織一覧（Supabaseから取得）
 }
 
-const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, orgId }) => {
+const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, orgId, organizations }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -181,7 +182,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user, or
                     }`}
                   >
                     <option value="">選択してください</option>
-                    {MOCK_ORGS.map(org => (
+                    {(organizations && organizations.length > 0 ? organizations : MOCK_ORGS).map(org => (
                       <option key={org.id} value={org.id}>
                         {org.name}
                       </option>
