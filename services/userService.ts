@@ -112,10 +112,12 @@ export async function createUser(
   userData: Omit<User, 'id' | 'scores'>
 ): Promise<User | null> {
   try {
-    // 環境変数が設定されていない場合はエラーを投げる
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    if (!supabaseUrl) {
-      throw new Error('Supabase環境変数が設定されていません。');
+    // 環境変数が設定されているか確認
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase環境変数が設定されていません。.env.localファイルにVITE_SUPABASE_URLとVITE_SUPABASE_ANON_KEYを設定し、開発サーバーを再起動してください。');
     }
 
     const insertData: any = {
@@ -192,10 +194,12 @@ export async function updateUser(
   userData: Partial<Omit<User, 'id' | 'scores'>>
 ): Promise<User | null> {
   try {
-    // 環境変数が設定されていない場合はエラーを投げる
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    if (!supabaseUrl) {
-      throw new Error('Supabase環境変数が設定されていません。');
+    // 環境変数が設定されているか確認
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase環境変数が設定されていません。.env.localファイルにVITE_SUPABASE_URLとVITE_SUPABASE_ANON_KEYを設定し、開発サーバーを再起動してください。');
     }
 
     const updateData: any = {
@@ -256,10 +260,12 @@ export async function updateUser(
  */
 export async function deleteUser(id: string): Promise<boolean> {
   try {
-    // 環境変数が設定されていない場合はエラーを投げる
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    if (!supabaseUrl) {
-      throw new Error('Supabase環境変数が設定されていません。');
+    // 環境変数が設定されているか確認
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase環境変数が設定されていません。.env.localファイルにVITE_SUPABASE_URLとVITE_SUPABASE_ANON_KEYを設定し、開発サーバーを再起動してください。');
     }
 
     const { error } = await supabase

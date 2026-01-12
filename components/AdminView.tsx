@@ -216,9 +216,15 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
       }
       setIsUserModalOpen(false);
       setEditingUser(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('ユーザーの保存に失敗しました:', error);
-      alert('ユーザーの保存に失敗しました。もう一度お試しください。');
+      const errorMessage = error?.message || 'ユーザーの保存に失敗しました。';
+      
+      if (errorMessage.includes('Supabase環境変数')) {
+        alert('Supabase環境変数が設定されていません。\n\n.env.localファイルに以下の環境変数を設定してください：\n\nVITE_SUPABASE_URL=your_supabase_url\nVITE_SUPABASE_ANON_KEY=your_supabase_anon_key\n\n設定後、開発サーバーを再起動してください。');
+      } else {
+        alert(`ユーザーの保存に失敗しました：${errorMessage}\n\nもう一度お試しください。`);
+      }
     }
   };
 
