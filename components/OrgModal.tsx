@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Organization } from '../types';
+import { generateRandomOrgId, generateRandomSlug } from '../utils/idGenerator';
+import { checkSlugAvailability } from '../services/organizationService';
 
 interface OrgModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (org: Omit<Organization, 'id' | 'createdAt' | 'memberCount' | 'avgScore'>) => void;
+  onSave: (org: Omit<Organization, 'id' | 'createdAt' | 'memberCount' | 'avgScore'>, generatedId?: string) => void;
   org?: Organization | null; // 編集時は既存の法人データ、新規追加時はnull
 }
 
@@ -23,6 +25,7 @@ const OrgModal: React.FC<OrgModalProps> = ({ isOpen, onClose, onSave, org }) => 
   });
 
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const [generatedId, setGeneratedId] = useState<string>('');
 
   useEffect(() => {
     if (org) {
@@ -40,11 +43,15 @@ const OrgModal: React.FC<OrgModalProps> = ({ isOpen, onClose, onSave, org }) => 
         password: '', // セキュリティのため、編集時は空にする
       });
       setLogoPreview(org.logo || '');
+      setGeneratedId(''); // 編集時はIDを表示しない
     } else {
-      // 新規追加モード：フォームをリセット
+      // 新規追加モード：フォームをリセットし、ランダム識別IDとSlugを生成
+      const newId = generateRandomOrgId();
+      const newSlug = generateRandomSlug();
+      setGeneratedId(newId);
       setFormData({
         name: '',
-        slug: '',
+        slug: newSlug, // ランダムSlugを自動設定
         logo: '',
         description: '',
         website: '',
@@ -61,18 +68,7 @@ const OrgModal: React.FC<OrgModalProps> = ({ isOpen, onClose, onSave, org }) => 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-
-    // slugを自動生成（法人名から）
-    if (name === 'name' && !org) {
-      const autoSlug = value
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
-      setFormData(prev => ({ ...prev, slug: autoSlug }));
-    }
+    // 注: Slugは新規作成時に自動生成されるため、手動変更は可能だが推奨しない
   };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,12 +91,22 @@ const OrgModal: React.FC<OrgModalProps> = ({ isOpen, onClose, onSave, org }) => 
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.slug.trim()) {
       alert('法人名とSlugは必須項目です。');
       return;
+    }
+
+    // Slugの重複チェック（新規作成時、または編集時にSlugが変更された場合）
+    const slugChanged = org ? formData.slug !== org.slug : true;
+    if (slugChanged) {
+      const isAvailable = await checkSlugAvailability(formData.slug.trim(), org?.id);
+      if (!isAvailable) {
+        alert('このSlugは既に使用されています。別のSlugを入力してください。');
+        return;
+      }
     }
 
     if (!formData.accountId.trim()) {
@@ -124,7 +130,7 @@ const OrgModal: React.FC<OrgModalProps> = ({ isOpen, onClose, onSave, org }) => 
       email: formData.email.trim() || undefined,
       accountId: formData.accountId.trim(),
       password: formData.password.trim() || undefined, // 編集時でパスワードが空の場合は変更しない
-    });
+    }, generatedId || undefined); // 新規作成時のみ生成されたIDを渡す
     
     onClose();
   };
@@ -233,11 +239,49 @@ const OrgModal: React.FC<OrgModalProps> = ({ isOpen, onClose, onSave, org }) => 
                     required
                     pattern="[a-z0-9-]+"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none font-mono text-sm"
+                    readOnly={!org} // 新規作成時は読み取り専用（自動生成）
                   />
                   <p className="mt-1 text-xs text-slate-500">
-                    小文字の英数字とハイフンのみ使用可能（例: tech-frontier）
+                    {!org 
+                      ? 'ランダムで自動生成されます（小文字の英数字とハイフンのみ）'
+                      : '小文字の英数字とハイフンのみ使用可能（例: tech-frontier）'
+                    }
                   </p>
                 </div>
+
+                {/* ランダム識別ID（新規作成時のみ表示） */}
+                {!org && generatedId && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      法人識別ID（自動生成）
+                    </label>
+                    <div className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg">
+                      <code className="text-sm font-mono text-slate-700 break-all">
+                        {generatedId}
+                      </code>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      このIDは自動で生成され、法人管理の識別子として使用されます（Supabase連携時に使用）
+                    </p>
+                  </div>
+                )}
+
+                {/* 既存法人のID（編集時のみ表示） */}
+                {org && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      法人識別ID
+                    </label>
+                    <div className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg">
+                      <code className="text-sm font-mono text-slate-700 break-all">
+                        {org.id}
+                      </code>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      法人管理の識別子として使用されています
+                    </p>
+                  </div>
+                )}
 
                 {/* 詳細説明 */}
                 <div>

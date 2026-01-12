@@ -12,6 +12,7 @@ import SurveyResponseForm from './components/SurveyResponseForm';
 import RespondentGrowthAnalysis from './components/RespondentGrowthAnalysis';
 import { findSurveyById } from './services/surveyService';
 import { saveResponse } from './services/surveyResponseService';
+import { getOrganizationById } from './services/organizationService';
 
 const App: React.FC = () => {
   const [auth, setAuth] = useState<AuthState>({
@@ -27,14 +28,12 @@ const App: React.FC = () => {
   // Handle URL params on initialization
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tenantSlug = params.get('tenant');
+    const tenantId = params.get('tenant'); // UUIDを使用
     const surveyId = params.get('survey');
     
-    if (tenantSlug) {
-      const org = MOCK_ORGS.find(o => o.slug === tenantSlug);
-      if (org) {
-        setAuth(prev => ({ ...prev, viewingOrg: org }));
-      }
+    if (tenantId) {
+      // UUIDで法人を検索（Supabaseから取得を試みる）
+      loadOrganizationById(tenantId);
     }
     
     // 回答リンクからアクセスされた場合
@@ -45,6 +44,25 @@ const App: React.FC = () => {
       }
     }
   }, []);
+
+  const loadOrganizationById = async (orgId: string) => {
+    try {
+      // まずSupabaseから取得を試みる
+      const org = await getOrganizationById(orgId);
+      if (org) {
+        setAuth(prev => ({ ...prev, viewingOrg: org }));
+        return;
+      }
+    } catch (error) {
+      console.error('法人の取得に失敗しました:', error);
+    }
+    
+    // Supabaseから取得できない場合は、MOCK_ORGSから検索（後方互換性）
+    const org = MOCK_ORGS.find(o => o.id === orgId || o.slug === orgId);
+    if (org) {
+      setAuth(prev => ({ ...prev, viewingOrg: org }));
+    }
+  };
 
   const handleLogin = (org: Organization, isSuperAdmin?: boolean) => {
     setAuth(prev => ({
@@ -132,13 +150,13 @@ const App: React.FC = () => {
       {activeView === 'orgs' && (
         <AdminView type="orgs" onSelectOrg={handleSelectOrg} />
       )}
-      {activeView === 'surveys' && (
+      {activeView === 'surveys' && !auth.isSuperAdmin && (
         <SurveyManagement 
-          userRole={auth.isSuperAdmin ? Role.SUPER_ADMIN : Role.ORG_ADMIN}
+          userRole={Role.ORG_ADMIN}
           orgId={auth.org.id}
         />
       )}
-      {activeView === 'rankDefinition' && (
+      {activeView === 'rankDefinition' && !auth.isSuperAdmin && (
         <RankDefinitionSettings org={auth.org} />
       )}
       {activeView === 'growth' && (

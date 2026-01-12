@@ -47,27 +47,31 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
             ダッシュボード
           </button>
 
-          <button
-            onClick={() => {
-              onNavigate('surveys');
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'surveys' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-          >
-            <span className="mr-3">📝</span>
-            アンケート管理
-          </button>
+          {!isSuperAdmin && (
+            <button
+              onClick={() => {
+                onNavigate('surveys');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'surveys' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+            >
+              <span className="mr-3">📝</span>
+              アンケート管理
+            </button>
+          )}
 
-          <button
-            onClick={() => {
-              onNavigate('rankDefinition');
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'rankDefinition' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-          >
-            <span className="mr-3">⭐</span>
-            ランク定義設定
-          </button>
+          {!isSuperAdmin && (
+            <button
+              onClick={() => {
+                onNavigate('rankDefinition');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'rankDefinition' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+            >
+              <span className="mr-3">⭐</span>
+              ランク定義設定
+            </button>
+          )}
 
           <button
             onClick={() => {
@@ -132,8 +136,8 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
             </button>
             <h2 className="text-base lg:text-lg font-semibold text-white">
             {activeView === 'dashboard' && '分析ダッシュボード'}
-            {activeView === 'surveys' && 'アンケート管理'}
-            {activeView === 'rankDefinition' && 'ランク定義設定'}
+            {activeView === 'surveys' && !isSuperAdmin && 'アンケート管理'}
+            {activeView === 'rankDefinition' && !isSuperAdmin && 'ランク定義設定'}
             {activeView === 'growth' && '回答者別成長率分析'}
             {activeView === 'orgs' && '法人アカウント管理'}
             </h2>

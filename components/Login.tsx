@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Organization } from '../types';
 import { MOCK_ORGS } from '../constants';
+import { getOrganizationById } from '../services/organizationService';
 
 interface LoginProps {
   onLogin: (org: Organization, isSuperAdmin?: boolean) => void;
@@ -15,16 +16,33 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tenantSlug = params.get('tenant');
+    const tenantId = params.get('tenant'); // UUIDを使用
     
-    if (tenantSlug) {
-      const org = MOCK_ORGS.find(o => o.slug === tenantSlug);
+    if (tenantId) {
+      loadTenantOrganization(tenantId);
+    }
+  }, []);
+
+  const loadTenantOrganization = async (orgId: string) => {
+    try {
+      // まずSupabaseから取得を試みる
+      const org = await getOrganizationById(orgId);
       if (org) {
         setTenantOrg(org);
         setAccountId(org.accountId);
+        return;
       }
+    } catch (error) {
+      console.error('法人の取得に失敗しました:', error);
     }
-  }, []);
+    
+    // Supabaseから取得できない場合は、MOCK_ORGSから検索（後方互換性）
+    const org = MOCK_ORGS.find(o => o.id === orgId || o.slug === orgId);
+    if (org) {
+      setTenantOrg(org);
+      setAccountId(org.accountId);
+    }
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

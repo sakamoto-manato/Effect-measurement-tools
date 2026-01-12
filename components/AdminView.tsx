@@ -1,11 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Organization, User, Role, RankDefinition } from '../types';
 import { MOCK_ORGS, MOCK_USERS } from '../constants';
 import OrgModal from './OrgModal';
 import UserModal from './UserModal';
 import RankDefinitionEditor from './RankDefinitionEditor';
 import { getRankDefinition } from '../services/rankDefinitionService';
+import { generateRandomOrgId } from '../utils/idGenerator';
+import { 
+  getOrganizations, 
+  createOrganization, 
+  updateOrganization, 
+  deleteOrganization 
+} from '../services/organizationService';
 
 interface AdminViewProps {
   type: 'orgs' | 'users';
@@ -23,11 +30,44 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRankDefinitionModalOpen, setIsRankDefinitionModalOpen] = useState(false);
   const [editingRankDefinitionOrg, setEditingRankDefinitionOrg] = useState<Organization | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleDeleteOrg = (id: string, e: React.MouseEvent) => {
+  // Supabaseから法人一覧を取得
+  useEffect(() => {
+    if (type === 'orgs') {
+      loadOrganizations();
+    }
+  }, [type]);
+
+  const loadOrganizations = async () => {
+    setLoading(true);
+    try {
+      const data = await getOrganizations();
+      if (data.length > 0) {
+        setOrgs(data);
+      } else {
+        // Supabaseにデータがない場合は、MOCK_ORGSを使用（後方互換性）
+        setOrgs(MOCK_ORGS);
+      }
+    } catch (error) {
+      console.error('法人一覧の読み込みに失敗しました:', error);
+      // エラー時はMOCK_ORGSを使用
+      setOrgs(MOCK_ORGS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteOrg = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('この法人アカウントを削除してもよろしいですか？すべてのデータが消失します。')) {
-      setOrgs(orgs.filter(o => o.id !== id));
+      try {
+        await deleteOrganization(id);
+        setOrgs(orgs.filter(o => o.id !== id));
+      } catch (error) {
+        console.error('法人の削除に失敗しました:', error);
+        alert('法人の削除に失敗しました。もう一度お試しください。');
+      }
     }
   };
 
@@ -49,9 +89,9 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
   };
 
   const handleOpenTenantLogin = (org: Organization) => {
-    // Generate the URL for the specific corporation's login page
+    // Generate the URL for the specific corporation's login page using UUID
     const url = new URL(window.location.href);
-    url.searchParams.set('tenant', org.slug);
+    url.searchParams.set('tenant', org.id); // UUIDを使用
     // Redirect to simulate jumping to the corporate-specific dashboard login
     window.location.href = url.toString();
   };
@@ -91,30 +131,38 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
     setIsUserModalOpen(true);
   };
 
-  const handleSaveOrg = (orgData: Omit<Organization, 'id' | 'createdAt' | 'memberCount' | 'avgScore'>) => {
-    if (editingOrg) {
-      // 編集モード：パスワードが空の場合は既存のパスワードを保持
-      const updatedOrgData = orgData.password 
-        ? orgData 
-        : { ...orgData, password: editingOrg.password };
-      setOrgs(orgs.map(org => 
-        org.id === editingOrg.id 
-          ? { ...org, ...updatedOrgData }
-          : org
-      ));
-    } else {
-      // 新規追加モード
-      const newOrg: Organization = {
-        ...orgData,
-        id: `org-${Date.now()}`,
-        createdAt: new Date().toISOString().split('T')[0],
-        memberCount: 0,
-        avgScore: 0,
-      };
-      setOrgs([...orgs, newOrg]);
+  const handleSaveOrg = async (
+    orgData: Omit<Organization, 'id' | 'createdAt' | 'memberCount' | 'avgScore'>, 
+    generatedId?: string
+  ) => {
+    try {
+      if (editingOrg) {
+        // 編集モード：Supabaseに更新
+        const updatedOrg = await updateOrganization(editingOrg.id, orgData);
+        if (updatedOrg) {
+          // パスワードが空の場合は既存のパスワードを保持
+          const updatedOrgData = orgData.password 
+            ? orgData 
+            : { ...orgData, password: editingOrg.password };
+          setOrgs(orgs.map(org => 
+            org.id === editingOrg.id 
+              ? { ...updatedOrg, ...updatedOrgData }
+              : org
+          ));
+        }
+      } else {
+        // 新規追加モード：Supabaseに作成
+        const newOrg = await createOrganization(orgData);
+        if (newOrg) {
+          setOrgs([...orgs, newOrg]);
+        }
+      }
+      setIsOrgModalOpen(false);
+      setEditingOrg(null);
+    } catch (error) {
+      console.error('法人の保存に失敗しました:', error);
+      alert('法人の保存に失敗しました。もう一度お試しください。');
     }
-    setIsOrgModalOpen(false);
-    setEditingOrg(null);
   };
 
   const handleSaveUser = (userData: Omit<User, 'id' | 'scores'>) => {
@@ -187,6 +235,7 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                 <>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ロゴ</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">法人名</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">識別ID</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">登録日</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">メンバー数</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">平均スコア</th>
@@ -223,6 +272,11 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                     )}
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{org.name}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
+                    <code className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono break-all">
+                      {org.id}
+                    </code>
+                  </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{org.createdAt}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500">{org.memberCount} 名</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
