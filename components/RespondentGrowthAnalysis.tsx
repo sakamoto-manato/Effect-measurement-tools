@@ -8,6 +8,7 @@ import { getRankDefinition } from '../services/rankDefinitionService';
 import { generateDemoResponses } from '../services/demoDataService';
 import { calculateRankChanges, calculateRankChangeStats, getRankFromScore } from '../services/rankCalculationService';
 import { getSurveysByOrg, getSurveysByOrgFromSupabase } from '../services/surveyService';
+import { getOrganizations } from '../services/organizationService';
 
 interface RespondentGrowthAnalysisProps {
   org: Organization;
@@ -36,6 +37,10 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
   // 属性フィルタ用のstate
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [attributeFilters, setAttributeFilters] = useState<{ [key: string]: string }>({});
+  
+  // 全法人のデータ（管理者用）
+  const [allOrganizations, setAllOrganizations] = useState<Organization[]>([]);
+  const [allOrgResponses, setAllOrgResponses] = useState<SurveyResponse[]>([]);
 
   const targetOrgId = viewingOrg?.id || org.id;
   const rankDefinition = viewingOrg?.rankDefinition || org.rankDefinition || getRankDefinition(targetOrgId);
@@ -275,6 +280,42 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     
     loadData();
   }, [targetOrgId, viewingOrg, org]);
+
+  // 管理者用：全法人のデータを取得（「すべての法人」が選択されている場合）
+  useEffect(() => {
+    if (isSuperAdmin && !viewingOrg && organizations.length > 0) {
+      const loadAllOrgData = async () => {
+        try {
+          const orgs = await getOrganizations();
+          setAllOrganizations(orgs.length > 0 ? orgs : organizations);
+
+          // 全法人の回答データを取得
+          const allResponses: SurveyResponse[] = [];
+          for (const orgItem of (orgs.length > 0 ? orgs : organizations)) {
+            try {
+              const orgResponses = await getResponsesByOrgFromSupabase(orgItem.id);
+              allResponses.push(...orgResponses);
+            } catch (error) {
+              console.error(`法人 ${orgItem.name} の回答データ取得に失敗:`, error);
+              // エラー時はlocalStorageから取得を試みる
+              const localStorageResponses = getResponsesByOrg(orgItem.id);
+              allResponses.push(...localStorageResponses);
+            }
+          }
+          setAllOrgResponses(allResponses);
+        } catch (error) {
+          console.error('全法人データの取得に失敗しました:', error);
+          setAllOrganizations(organizations);
+        }
+      };
+
+      loadAllOrgData();
+    } else {
+      // 特定の法人が選択されている場合はクリア
+      setAllOrganizations([]);
+      setAllOrgResponses([]);
+    }
+  }, [isSuperAdmin, viewingOrg, organizations]);
 
   // 回答者一覧を取得（フィルタリング後のデータから）
   const respondents = useMemo(() => {
@@ -730,7 +771,245 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
         </div>
       )}
 
-      {/* 分析結果の表示 */}
+      {/* 管理者用：すべての法人が選択されている場合、法人ごとの成長率分析を表示 */}
+      {isSuperAdmin && !viewingOrg && allOrganizations.length > 0 && (
+        <div className="space-y-6">
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <p className="text-sm text-indigo-800">
+              <strong>すべての法人</strong> の成長率分析を表示中
+            </p>
+          </div>
+
+          {/* 法人ごとの成長率一覧 */}
+          <div className="space-y-4">
+            {allOrganizations.map((orgItem) => {
+              const orgItemResponses = allOrgResponses.filter(r => r.orgId === orgItem.id);
+              const orgItemRankDefinition = orgItem.rankDefinition || getRankDefinition(orgItem.id);
+              
+              // 期間フィルタを適用
+              let filteredOrgResponses = orgItemResponses;
+              if (startDate && endDate) {
+                const start = new Date(startDate + '-01');
+                const end = new Date(endDate + '-01');
+                end.setMonth(end.getMonth() + 1);
+                end.setDate(0);
+                end.setHours(23, 59, 59, 999);
+                
+                filteredOrgResponses = orgItemResponses.filter(response => {
+                  const responseDate = new Date(response.submittedAt);
+                  return responseDate >= start && responseDate <= end;
+                });
+              }
+              
+              // 最新のスコアと過去のスコアを計算
+              const sortedResponses = filteredOrgResponses
+                .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+              
+              const latestResponses = sortedResponses.slice(0, Math.min(10, sortedResponses.length));
+              const olderResponses = sortedResponses.slice(10, Math.min(20, sortedResponses.length));
+
+              const latestScore = latestResponses.length > 0
+                ? calculateOverallScore(calculateOrgAverageScore(orgItem.id, latestResponses, orgItemRankDefinition || undefined))
+                : 0;
+              
+              const olderScore = olderResponses.length > 0
+                ? calculateOverallScore(calculateOrgAverageScore(orgItem.id, olderResponses, orgItemRankDefinition || undefined))
+                : latestScore;
+
+              const growthRate = olderScore > 0 
+                ? Math.round(((latestScore - olderScore) / olderScore) * 100)
+                : 0;
+
+              // 月次推移データを計算
+              const monthlyData = new Map<string, { totalScore: number; count: number }>();
+              filteredOrgResponses.forEach(response => {
+                const date = new Date(response.submittedAt);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const scores = calculateOrgAverageScore(orgItem.id, [response], orgItemRankDefinition || undefined);
+                const overallScore = calculateOverallScore(scores);
+                
+                if (!monthlyData.has(monthKey)) {
+                  monthlyData.set(monthKey, { totalScore: 0, count: 0 });
+                }
+                const data = monthlyData.get(monthKey)!;
+                data.totalScore += overallScore;
+                data.count += 1;
+              });
+
+              const trendData = Array.from(monthlyData.entries())
+                .map(([month, data]) => ({
+                  month: month.replace('-', '/'),
+                  score: Math.round(data.totalScore / data.count),
+                }))
+                .sort((a, b) => a.month.localeCompare(b.month))
+                .slice(-6); // 直近6ヶ月
+
+              return (
+                <div key={orgItem.id} className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm hover:border-indigo-300 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      {orgItem.logo ? (
+                        <img
+                          src={orgItem.logo}
+                          alt={orgItem.name}
+                          className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded border border-slate-200 bg-white"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded border border-slate-200 bg-slate-100 flex items-center justify-center">
+                          <span className="text-slate-400 text-lg sm:text-xl">🏢</span>
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-semibold text-slate-800 text-base sm:text-lg">{orgItem.name}</h4>
+                        <p className="text-xs text-slate-500">
+                          {filteredOrgResponses.length}件の回答 / {new Set(filteredOrgResponses.map(r => r.respondentName)).size}名の回答者
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-xs text-slate-600 mb-1">平均スコア</p>
+                        <p className="text-2xl font-bold text-indigo-600">{latestScore}点</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-600 mb-1">成長率</p>
+                        <p className={`text-2xl font-bold ${growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {growthRate >= 0 ? '+' : ''}{growthRate}%
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => onSelectOrg?.(orgItem)}
+                        className="px-3 py-2 text-sm text-indigo-600 hover:text-indigo-800 border border-indigo-300 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
+                      >
+                        詳細を見る
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* 成長率推移グラフ */}
+                  {trendData.length > 0 && (
+                    <div className="h-48 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={trendData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis 
+                            dataKey="month" 
+                            tick={{ fill: '#64748b', fontSize: 10 }}
+                          />
+                          <YAxis 
+                            domain={[0, 100]}
+                            tick={{ fill: '#64748b', fontSize: 10 }}
+                          />
+                          <Tooltip 
+                            formatter={(value: number) => [`${value}点`, '平均スコア']}
+                            labelFormatter={(label) => `期間: ${label}`}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="#6366f1" 
+                            strokeWidth={2}
+                            dot={{ r: 4 }}
+                            activeDot={{ r: 6 }}
+                            name="平均スコア"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 法人間の成長率比較グラフ */}
+          {allOrganizations.length > 1 && (
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">法人間の成長率比較</h3>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={allOrganizations.map(orgItem => {
+                    const orgItemResponses = allOrgResponses.filter(r => r.orgId === orgItem.id);
+                    const orgItemRankDefinition = orgItem.rankDefinition || getRankDefinition(orgItem.id);
+                    
+                    // 期間フィルタを適用
+                    let filteredOrgResponses = orgItemResponses;
+                    if (startDate && endDate) {
+                      const start = new Date(startDate + '-01');
+                      const end = new Date(endDate + '-01');
+                      end.setMonth(end.getMonth() + 1);
+                      end.setDate(0);
+                      end.setHours(23, 59, 59, 999);
+                      
+                      filteredOrgResponses = orgItemResponses.filter(response => {
+                        const responseDate = new Date(response.submittedAt);
+                        return responseDate >= start && responseDate <= end;
+                      });
+                    }
+                    
+                    const sortedResponses = filteredOrgResponses
+                      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+                    
+                    const latestResponses = sortedResponses.slice(0, Math.min(10, sortedResponses.length));
+                    const olderResponses = sortedResponses.slice(10, Math.min(20, sortedResponses.length));
+
+                    const latestScore = latestResponses.length > 0
+                      ? calculateOverallScore(calculateOrgAverageScore(orgItem.id, latestResponses, orgItemRankDefinition || undefined))
+                      : 0;
+                    
+                    const olderScore = olderResponses.length > 0
+                      ? calculateOverallScore(calculateOrgAverageScore(orgItem.id, olderResponses, orgItemRankDefinition || undefined))
+                      : latestScore;
+
+                    const growthRate = olderScore > 0 
+                      ? Math.round(((latestScore - olderScore) / olderScore) * 100)
+                      : 0;
+
+                    return {
+                      name: orgItem.name.length > 10 ? orgItem.name.substring(0, 10) + '...' : orgItem.name,
+                      growthRate: growthRate,
+                      avgScore: latestScore,
+                    };
+                  })}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: '#64748b', fontSize: 10 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      tick={{ fill: '#64748b', fontSize: 10 }}
+                    />
+                    <Tooltip 
+                      formatter={(value: number, name: string) => {
+                        if (name === 'growthRate') {
+                          return [`${value >= 0 ? '+' : ''}${value}%`, '成長率'];
+                        }
+                        return [`${value}点`, '平均スコア'];
+                      }}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="growthRate" 
+                      fill="#6366f1"
+                      name="成長率 (%)"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 分析結果の表示（特定の法人が選択されている場合、または管理者でない場合） */}
+      {(!isSuperAdmin || viewingOrg) && (
+        <>
       {/* ランクサマリーカード */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
@@ -1076,6 +1355,8 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
             上記から回答者を選択すると、詳細な成長率グラフが表示されます。
           </p>
         </div>
+      )}
+        </>
       )}
     </div>
   );
