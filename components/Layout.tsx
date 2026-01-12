@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Organization } from '../types';
 
 interface LayoutProps {
@@ -7,12 +8,17 @@ interface LayoutProps {
   org: Organization;
   isSuperAdmin: boolean;
   onLogout: () => void;
-  onNavigate: (view: 'dashboard' | 'orgs' | 'surveys' | 'rankDefinition' | 'growth') => void;
   activeView: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, onNavigate, activeView }) => {
+const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, activeView }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // 現在のパスが指定されたパスと一致するかチェック
+  const isActive = (path: string) => {
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <div className="flex h-screen bg-slate-900 overflow-hidden">
@@ -36,65 +42,55 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
         </div>
 
         <nav className="flex-1 mt-6 px-4 space-y-1">
-          <button
-            onClick={() => {
-              onNavigate('dashboard');
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'dashboard' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+          <Link
+            to="/dashboard"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${isActive('/dashboard') ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
           >
             <span className="mr-3">📊</span>
             ダッシュボード
-          </button>
+          </Link>
 
           {!isSuperAdmin && (
-            <button
-              onClick={() => {
-                onNavigate('surveys');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'surveys' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+            <Link
+              to="/surveys"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${isActive('/surveys') ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
             >
               <span className="mr-3">📝</span>
               アンケート管理
-            </button>
+            </Link>
           )}
 
           {!isSuperAdmin && (
-            <button
-              onClick={() => {
-                onNavigate('rankDefinition');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'rankDefinition' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+            <Link
+              to="/rank-definition"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${isActive('/rank-definition') ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
             >
               <span className="mr-3">⭐</span>
               ランク定義設定
-            </button>
+            </Link>
           )}
 
-          <button
-            onClick={() => {
-              onNavigate('growth');
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'growth' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+          <Link
+            to="/growth"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${isActive('/growth') ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
           >
             <span className="mr-3">📈</span>
             成長率分析
-          </button>
+          </Link>
 
           {isSuperAdmin && (
-            <button
-              onClick={() => {
-                onNavigate('orgs');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeView === 'orgs' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+            <Link
+              to="/orgs"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${isActive('/orgs') ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
             >
               <span className="mr-3">🏢</span>
               法人管理
-            </button>
+            </Link>
           )}
         </nav>
 
@@ -135,11 +131,11 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
               </svg>
             </button>
             <h2 className="text-base lg:text-lg font-semibold text-white">
-            {activeView === 'dashboard' && '分析ダッシュボード'}
-            {activeView === 'surveys' && !isSuperAdmin && 'アンケート管理'}
-            {activeView === 'rankDefinition' && !isSuperAdmin && 'ランク定義設定'}
-            {activeView === 'growth' && '回答者別成長率分析'}
-            {activeView === 'orgs' && '法人アカウント管理'}
+            {isActive('/dashboard') && '分析ダッシュボード'}
+            {isActive('/surveys') && !isSuperAdmin && 'アンケート管理'}
+            {isActive('/rank-definition') && !isSuperAdmin && 'ランク定義設定'}
+            {isActive('/growth') && '回答者別成長率分析'}
+            {isActive('/orgs') && '法人アカウント管理'}
             </h2>
           </div>
           <div className="flex items-center space-x-2 lg:space-x-4">
