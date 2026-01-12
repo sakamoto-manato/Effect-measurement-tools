@@ -3,7 +3,7 @@ import { Role, Organization, User } from './types';
 
 export const MOCK_ORGS: Organization[] = [
   { 
-    id: 'org-1', 
+    id: '550e8400-e29b-41d4-a716-446655440001',  // データベースのUUIDと一致
     slug: 'tech-frontier', 
     name: '株式会社テクノロジー・フロンティア', 
     createdAt: '2024-01-15', 
@@ -18,7 +18,7 @@ export const MOCK_ORGS: Organization[] = [
     password: 'demo123' // デモ用
   },
   { 
-    id: 'org-2', 
+    id: '550e8400-e29b-41d4-a716-446655440002',  // データベースのUUIDと一致
     slug: 'global-sol', 
     name: 'グローバル・イノベーション・ソリューション', 
     createdAt: '2024-02-10', 
@@ -33,7 +33,7 @@ export const MOCK_ORGS: Organization[] = [
     password: 'demo123' // デモ用
   },
   { 
-    id: 'org-3', 
+    id: '550e8400-e29b-41d4-a716-446655440003',  // データベースのUUIDと一致
     slug: 'ai-collab', 
     name: 'AI共創ラボ', 
     createdAt: '2024-03-05', 
@@ -64,7 +64,7 @@ export const MOCK_USERS: User[] = [
     name: '山田 太郎',
     email: 'yamada@tech.com',
     role: Role.ORG_ADMIN,
-    orgId: 'org-1',
+    orgId: '550e8400-e29b-41d4-a716-446655440001',  // tech-frontierのUUID
     scores: { basics: 70, prompting: 60, ethics: 50, tools: 65, automation: 40 },
     pendingPassword: false,
     department: 'IT企画部',
@@ -75,7 +75,7 @@ export const MOCK_USERS: User[] = [
     name: '佐藤 結衣',
     email: 'sato@tech.com',
     role: Role.USER,
-    orgId: 'org-1',
+    orgId: '550e8400-e29b-41d4-a716-446655440001',  // tech-frontierのUUID
     scores: { basics: 45, prompting: 30, ethics: 70, tools: 40, automation: 20 },
     pendingPassword: false,
     department: '開発部',

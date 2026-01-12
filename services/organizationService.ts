@@ -41,7 +41,7 @@ export async function getOrganizations(): Promise<Organization[]> {
 }
 
 /**
- * IDで法人を取得
+ * IDまたはSlugで法人を取得
  */
 export async function getOrganizationById(id: string): Promise<Organization | null> {
   try {
@@ -51,14 +51,24 @@ export async function getOrganizationById(id: string): Promise<Organization | nu
       return null;
     }
 
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', id)
-      .single();
+    // UUID形式かどうかをチェック（UUIDは8-4-4-4-12の形式）
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    
+    let query = supabase.from('organizations').select('*');
+    
+    if (isUUID) {
+      // UUID形式の場合はidで検索
+      query = query.eq('id', id);
+    } else {
+      // UUID形式でない場合はslugで検索（'org-1'などの文字列IDの場合）
+      query = query.eq('slug', id);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
       console.error('法人の取得エラー:', error);
+      console.error('検索パラメータ:', { id, isUUID, searchType: isUUID ? 'id' : 'slug' });
       return null;
     }
 
