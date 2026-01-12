@@ -27,10 +27,49 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
 }) => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [selectedRespondent, setSelectedRespondent] = useState<string | null>(null);
+  
+  // 期間選択用のstate
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   const targetOrgId = viewingOrg?.id || org.id;
   const rankDefinition = viewingOrg?.rankDefinition || org.rankDefinition || getRankDefinition(targetOrgId);
   const orgResponses = responses.filter(r => r.orgId === targetOrgId);
+
+  // 初期期間を設定（データが存在する場合は最初と最後の日付を使用）
+  useEffect(() => {
+    if (orgResponses.length > 0 && !startDate && !endDate) {
+      const dates = orgResponses
+        .map(r => new Date(r.submittedAt))
+        .sort((a, b) => a.getTime() - b.getTime());
+      const firstDate = dates[0];
+      const lastDate = dates[dates.length - 1];
+      
+      // YYYY-MM形式で設定
+      const firstMonth = `${firstDate.getFullYear()}-${String(firstDate.getMonth() + 1).padStart(2, '0')}`;
+      const lastMonth = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}`;
+      
+      setStartDate(firstMonth);
+      setEndDate(lastMonth);
+    }
+  }, [orgResponses.length]);
+
+  // 期間でフィルタリングされた回答データ
+  const filteredResponses = useMemo(() => {
+    if (!startDate || !endDate) return orgResponses;
+    
+    const start = new Date(startDate + '-01');
+    const end = new Date(endDate + '-01');
+    // 終了月の最後の日を設定
+    end.setMonth(end.getMonth() + 1);
+    end.setDate(0);
+    end.setHours(23, 59, 59, 999);
+    
+    return orgResponses.filter(response => {
+      const responseDate = new Date(response.submittedAt);
+      return responseDate >= start && responseDate <= end;
+    });
+  }, [orgResponses, startDate, endDate]);
 
   // 回答データを取得し、データが存在しない場合は初期デモデータを生成
   useEffect(() => {
@@ -54,16 +93,27 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     setSelectedRespondent(null);
   }, [targetOrgId, viewingOrg, org]);
 
-  // 回答者一覧を取得
+  // 回答者一覧を取得（フィルタリング後のデータから）
   const respondents = useMemo(() => {
-    const uniqueNames = new Set(orgResponses.map(r => r.respondentName));
+    const uniqueNames = new Set(filteredResponses.map(r => r.respondentName));
     return Array.from(uniqueNames).sort();
-  }, [orgResponses]);
+  }, [filteredResponses]);
 
-  // 選択された回答者の回答履歴を取得（時系列でソート）
+  // 選択された回答者の回答履歴を取得（時系列でソート、期間フィルタ適用）
   const respondentHistory = useMemo(() => {
     if (!selectedRespondent) return [];
-    const respondentResponses = getResponsesByRespondent(selectedRespondent, targetOrgId);
+    const allRespondentResponses = getResponsesByRespondent(selectedRespondent, targetOrgId);
+    // 期間フィルタを適用
+    const respondentResponses = allRespondentResponses.filter(response => {
+      if (!startDate || !endDate) return true;
+      const responseDate = new Date(response.submittedAt);
+      const start = new Date(startDate + '-01');
+      const end = new Date(endDate + '-01');
+      end.setMonth(end.getMonth() + 1);
+      end.setDate(0);
+      end.setHours(23, 59, 59, 999);
+      return responseDate >= start && responseDate <= end;
+    });
     return respondentResponses
       .map(response => {
         const scores = calculateScoreFromResponse(response, rankDefinition || undefined);
@@ -94,10 +144,22 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     return Math.round(rate * 10) / 10; // 小数点第1位まで
   }, [respondentHistory]);
 
-  // 回答者毎の最新スコアと成長率を計算
+  // 回答者毎の最新スコアと成長率を計算（期間フィルタ適用）
   const respondentStats = useMemo(() => {
     return respondents.map(name => {
-      const respondentResponses = getResponsesByRespondent(name, targetOrgId)
+      const allRespondentResponses = getResponsesByRespondent(name, targetOrgId);
+      // 期間フィルタを適用
+      const respondentResponses = allRespondentResponses
+        .filter(response => {
+          if (!startDate || !endDate) return true;
+          const responseDate = new Date(response.submittedAt);
+          const start = new Date(startDate + '-01');
+          const end = new Date(endDate + '-01');
+          end.setMonth(end.getMonth() + 1);
+          end.setDate(0);
+          end.setHours(23, 59, 59, 999);
+          return responseDate >= start && responseDate <= end;
+        })
         .map(response => {
           const scores = calculateScoreFromResponse(response, rankDefinition || undefined);
           const overallScore = calculateOverallScore(scores);
@@ -133,10 +195,10 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     }>;
   }, [respondents, targetOrgId, rankDefinition]);
 
-  // ランク変動情報を計算
+  // ランク変動情報を計算（期間フィルタ適用）
   const rankChanges = useMemo(() => {
-    return calculateRankChanges(orgResponses, targetOrgId, rankDefinition || undefined);
-  }, [orgResponses, targetOrgId, rankDefinition]);
+    return calculateRankChanges(filteredResponses, targetOrgId, rankDefinition || undefined);
+  }, [filteredResponses, targetOrgId, rankDefinition]);
 
   // ランク変動統計を計算
   const rankStats = useMemo(() => {
@@ -176,14 +238,14 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     }
   };
 
-  // 法人全体の平均スコア推移を計算（月次）
+  // 法人全体の平均スコア推移を計算（月次、期間フィルタ適用）
   const orgAverageTrend = useMemo(() => {
     // viewingOrgがnullの場合は、現在のorgを使用
     const targetOrg = viewingOrg || org;
     
     const monthlyData = new Map<string, { totalScore: number; count: number }>();
     
-    orgResponses.forEach(response => {
+    filteredResponses.forEach(response => {
       const date = new Date(response.submittedAt);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const scores = calculateScoreFromResponse(response, rankDefinition || undefined);
@@ -203,7 +265,25 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
         avgScore: Math.round(data.totalScore / data.count),
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
-  }, [viewingOrg, org, orgResponses, rankDefinition]);
+  }, [viewingOrg, org, filteredResponses, rankDefinition]);
+
+  // 期間をリセットする関数
+  const resetDateRange = () => {
+    if (orgResponses.length > 0) {
+      const dates = orgResponses
+        .map(r => new Date(r.submittedAt))
+        .sort((a, b) => a.getTime() - b.getTime());
+      const firstDate = dates[0];
+      const lastDate = dates[dates.length - 1];
+      const firstMonth = `${firstDate.getFullYear()}-${String(firstDate.getMonth() + 1).padStart(2, '0')}`;
+      const lastMonth = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}`;
+      setStartDate(firstMonth);
+      setEndDate(lastMonth);
+    } else {
+      setStartDate('');
+      setEndDate('');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -238,6 +318,55 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
                 クリア
               </button>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* 期間選択セクション */}
+      <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-1">分析期間の選択</h3>
+            <p className="text-xs sm:text-sm text-slate-600">特定の期間に絞って分析できます</p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-slate-700 whitespace-nowrap">開始:</label>
+              <input
+                type="month"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-slate-700 whitespace-nowrap">終了:</label>
+              <input
+                type="month"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-slate-900"
+              />
+            </div>
+            <button
+              onClick={resetDateRange}
+              className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-300 rounded-lg hover:bg-slate-50 whitespace-nowrap"
+            >
+              期間をリセット
+            </button>
+          </div>
+        </div>
+        {startDate && endDate && (
+          <div className="mt-3 pt-3 border-t border-slate-200">
+            <p className="text-xs text-slate-600">
+              表示中のデータ: <span className="font-medium text-slate-800">
+                {startDate.replace('-', '年').replace(/(\d{4})年(\d{2})/, '$1年$2月')} ～ {endDate.replace('-', '年').replace(/(\d{4})年(\d{2})/, '$1年$2月')}
+              </span>
+              <span className="ml-2 text-slate-500">
+                ({filteredResponses.length}件の回答データ)
+              </span>
+            </p>
           </div>
         )}
       </div>
