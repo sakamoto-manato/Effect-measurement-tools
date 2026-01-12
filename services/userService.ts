@@ -156,6 +156,13 @@ export async function createUser(
 
     if (error) {
       console.error('ユーザーの作成エラー:', error);
+      console.error('エラー詳細:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        insertData: insertData
+      });
       throw error;
     }
 
