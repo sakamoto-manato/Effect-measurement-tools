@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell } from 'recharts';
 import { Organization, SurveyResponse, Answer, Survey } from '../types';
 import { LITERACY_DIMENSIONS } from '../constants';
-import { getResponsesByOrg, getResponsesByRespondent, saveResponse } from '../services/surveyResponseService';
+import { getResponsesByOrg, getResponsesByRespondent, saveResponse, getResponsesByOrgFromSupabase, getResponsesByRespondentFromSupabase } from '../services/surveyResponseService';
 import { calculateScoreFromResponse, calculateOverallScore, calculateOrgAverageScore } from '../services/literacyScoreService';
 import { getRankDefinition } from '../services/rankDefinitionService';
 import { generateDemoResponses } from '../services/demoDataService';
 import { calculateRankChanges, calculateRankChangeStats, getRankFromScore } from '../services/rankCalculationService';
-import { getSurveysByOrg } from '../services/surveyService';
+import { getSurveysByOrg, getSurveysByOrgFromSupabase } from '../services/surveyService';
 
 interface RespondentGrowthAnalysisProps {
   org: Organization;
@@ -218,33 +218,59 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     filtered = applyAttributeFilters(filtered);
     
     return filtered;
-  }, [orgResponses, startDate, endDate, attributeFilters, identifyAttributeQuestions]);
+  }, [orgResponses, startDate, endDate, attributeFilters, identifyAttributeQuestions, surveys, applyAttributeFilters]);
 
-  // 回答データを取得し、データが存在しない場合は初期デモデータを生成
+  // 回答データを取得（Supabaseから）
   useEffect(() => {
-    const loadedResponses = getResponsesByOrg(targetOrgId);
+    const loadData = async () => {
+      try {
+        // Supabaseから回答データを取得
+        const supabaseResponses = await getResponsesByOrgFromSupabase(targetOrgId);
+        
+        if (supabaseResponses.length > 0) {
+          setResponses(supabaseResponses);
+        } else {
+          // Supabaseにデータがない場合はlocalStorageから取得を試みる
+          const localStorageResponses = getResponsesByOrg(targetOrgId);
+          if (localStorageResponses.length > 0) {
+            setResponses(localStorageResponses);
+          } else {
+            // データが存在しない場合、初期デモデータを生成
+            const demoResponses = generateDemoResponses(targetOrgId);
+            // 各回答を保存
+            demoResponses.forEach(response => {
+              saveResponse(response);
+            });
+            // 保存したデータを取得
+            const allResponses = getResponsesByOrg(targetOrgId);
+            setResponses(allResponses);
+          }
+        }
+        
+        // Supabaseからアンケートデータを取得
+        const supabaseSurveys = await getSurveysByOrgFromSupabase(targetOrgId);
+        if (supabaseSurveys.length > 0) {
+          setSurveys(supabaseSurveys);
+        } else {
+          // Supabaseにデータがない場合はlocalStorageから取得
+          const localStorageSurveys = getSurveysByOrg(targetOrgId);
+          setSurveys(localStorageSurveys);
+        }
+      } catch (error) {
+        console.error('データの取得に失敗しました:', error);
+        // エラー時はlocalStorageから取得
+        const localStorageResponses = getResponsesByOrg(targetOrgId);
+        setResponses(localStorageResponses);
+        const localStorageSurveys = getSurveysByOrg(targetOrgId);
+        setSurveys(localStorageSurveys);
+      }
+      
+      // 法人が変更されたら、選択された回答者とフィルタをリセット
+      setSelectedRespondent(null);
+      setAttributeFilters({});
+    };
     
-    // データが存在しない場合、初期デモデータを生成
-    if (loadedResponses.length === 0) {
-      const demoResponses = generateDemoResponses(targetOrgId);
-      // 各回答を保存
-      demoResponses.forEach(response => {
-        saveResponse(response);
-      });
-      // 保存したデータを取得
-      const allResponses = getResponsesByOrg(targetOrgId);
-      setResponses(allResponses);
-    } else {
-      setResponses(loadedResponses);
-    }
-    
-    // アンケートデータを取得（属性情報抽出用）
-    const orgSurveys = getSurveysByOrg(targetOrgId);
-    setSurveys(orgSurveys);
-    
-    // 法人が変更されたら、選択された回答者とフィルタをリセット
-    setSelectedRespondent(null);
-    setAttributeFilters({});
+    loadData();
   }, [targetOrgId, viewingOrg, org]);
 
   // 回答者一覧を取得（フィルタリング後のデータから）
@@ -256,21 +282,9 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
   // 選択された回答者の回答履歴を取得（時系列でソート、期間・属性フィルタ適用）
   const respondentHistory = useMemo(() => {
     if (!selectedRespondent) return [];
-    const allRespondentResponses = getResponsesByRespondent(selectedRespondent, targetOrgId);
-    // 期間フィルタを適用
-    let respondentResponses = allRespondentResponses.filter(response => {
-      if (!startDate || !endDate) return true;
-      const responseDate = new Date(response.submittedAt);
-      const start = new Date(startDate + '-01');
-      const end = new Date(endDate + '-01');
-      end.setMonth(end.getMonth() + 1);
-      end.setDate(0);
-      end.setHours(23, 59, 59, 999);
-      return responseDate >= start && responseDate <= end;
-    });
-    // 属性フィルタを適用
-    respondentResponses = applyAttributeFilters(respondentResponses);
-    return respondentResponses
+    // フィルタ済みの回答データから該当する回答者のデータを取得
+    const allRespondentResponses = filteredResponses.filter(r => r.respondentName === selectedRespondent);
+    return allRespondentResponses
       .map(response => {
         const scores = calculateScoreFromResponse(response, rankDefinition || undefined);
         const overallScore = calculateOverallScore(scores);
@@ -288,7 +302,7 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
         };
       })
       .sort((a, b) => a.timestamp - b.timestamp);
-  }, [selectedRespondent, targetOrgId, rankDefinition, startDate, endDate, attributeFilters, identifyAttributeQuestions]);
+  }, [selectedRespondent, filteredResponses, rankDefinition]);
 
   // 成長率を計算
   const growthRate = useMemo(() => {
@@ -303,23 +317,9 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
   // 回答者毎の最新スコアと成長率を計算（期間・属性フィルタ適用）
   const respondentStats = useMemo(() => {
     return respondents.map(name => {
-      const allRespondentResponses = getResponsesByRespondent(name, targetOrgId);
-      // 期間フィルタを適用
-      let respondentResponses = allRespondentResponses
-        .filter(response => {
-          if (!startDate || !endDate) return true;
-          const responseDate = new Date(response.submittedAt);
-          const start = new Date(startDate + '-01');
-          const end = new Date(endDate + '-01');
-          end.setMonth(end.getMonth() + 1);
-          end.setDate(0);
-          end.setHours(23, 59, 59, 999);
-          return responseDate >= start && responseDate <= end;
-        });
-      // 属性フィルタを適用
-      respondentResponses = applyAttributeFilters(respondentResponses);
-      // スコア計算
-      respondentResponses = respondentResponses
+      // フィルタ済みの回答データから該当する回答者のデータを取得
+      const respondentResponses = filteredResponses
+        .filter(response => response.respondentName === name)
         .map(response => {
           const scores = calculateScoreFromResponse(response, rankDefinition || undefined);
           const overallScore = calculateOverallScore(scores);
@@ -353,7 +353,7 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
       growthRate: number;
       responseCount: number;
     }>;
-  }, [respondents, targetOrgId, rankDefinition, startDate, endDate, attributeFilters, identifyAttributeQuestions]);
+  }, [respondents, filteredResponses, rankDefinition]);
 
   // ランク変動情報を計算（期間フィルタ適用）
   const rankChanges = useMemo(() => {
