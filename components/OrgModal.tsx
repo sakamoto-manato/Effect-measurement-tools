@@ -270,15 +270,15 @@ const OrgModal: React.FC<OrgModalProps> = ({ isOpen, onClose, onSave, org }) => 
                 {org && (
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      法人識別ID
+                      法人識別ID（スラッグ）
                     </label>
                     <div className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg">
                       <code className="text-sm font-mono text-slate-700 break-all">
-                        {org.id}
+                        {org.slug}
                       </code>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      法人管理の識別子として使用されています
+                      法人管理の識別子として使用されています（URLにも使用されます）
                     </p>
                   </div>
                 )}

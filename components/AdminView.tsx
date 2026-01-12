@@ -309,7 +309,7 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{org.name}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
                     <code className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono break-all">
-                      {org.id}
+                      {org.slug}
                     </code>
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{org.createdAt}</td>
@@ -387,7 +387,12 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{user.department || '-'}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{user.position || '-'}</td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell truncate">{user.orgId}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell truncate">
+                    {(() => {
+                      const userOrg = orgs.find(o => o.id === user.orgId);
+                      return userOrg ? userOrg.slug : user.orgId;
+                    })()}
+                  </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex flex-wrap justify-end gap-2">
                       <button 

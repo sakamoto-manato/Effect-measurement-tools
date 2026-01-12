@@ -116,7 +116,7 @@ const AddTestUsers: React.FC = () => {
             continue;
           }
 
-          newResults.push(`\n法人 "${org.name}" (ID: ${org.id}) にユーザーを追加中...`);
+          newResults.push(`\n法人 "${org.name}" (slug: ${org.slug}) にユーザーを追加中...`);
           setResults([...newResults]);
 
           // 各ユーザーを追加
