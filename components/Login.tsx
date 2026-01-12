@@ -16,7 +16,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tenantId = params.get('tenant'); // UUIDを使用
+    const tenantId = params.get('tenant'); // slug（会社名ベース）を使用
     
     if (tenantId) {
       loadTenantOrganization(tenantId);

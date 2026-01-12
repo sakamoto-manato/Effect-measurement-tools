@@ -38,11 +38,11 @@ const ProtectedRoute: React.FC<{
     return <Navigate to={`/dashboard${tenantParam}`} replace />;
   }
 
-  if (!auth.isSuperAdmin && !allowedForOrgAdmin) {
-    // 法人用の場合はtenantパラメータを保持
-    const orgTenantParam = auth.org ? `?tenant=${auth.org.id}` : '';
-    return <Navigate to={`/dashboard${orgTenantParam}`} replace />;
-  }
+    if (!auth.isSuperAdmin && !allowedForOrgAdmin) {
+      // 法人用の場合はtenantパラメータを保持（slugを使用）
+      const orgTenantParam = auth.org ? `?tenant=${auth.org.slug}` : '';
+      return <Navigate to={`/dashboard${orgTenantParam}`} replace />;
+    }
 
   return <>{children}</>;
 };
@@ -112,8 +112,8 @@ const AppContent: React.FC = () => {
       // 法人用ログイン：tenantパラメータを保持
       navigate(`/dashboard?tenant=${tenantId}`);
     } else if (!isSuperAdmin && org) {
-      // 法人用ログインだがtenantパラメータがない場合：org.idを使用
-      navigate(`/dashboard?tenant=${org.id}`);
+      // 法人用ログインだがtenantパラメータがない場合：org.slugを使用
+      navigate(`/dashboard?tenant=${org.slug}`);
     } else {
       // 管理者用ログイン：tenantパラメータなし
       navigate('/dashboard');
@@ -289,7 +289,7 @@ const AppContent: React.FC = () => {
               path="/" 
               element={
                 <Navigate 
-                  to={auth.isSuperAdmin ? '/dashboard' : `/dashboard?tenant=${auth.org!.id}`} 
+                  to={auth.isSuperAdmin ? '/dashboard' : `/dashboard?tenant=${auth.org!.slug}`} 
                   replace 
                 />
               } 
@@ -298,7 +298,7 @@ const AppContent: React.FC = () => {
               path="*" 
               element={
                 <Navigate 
-                  to={auth.isSuperAdmin ? '/dashboard' : `/dashboard?tenant=${auth.org!.id}`} 
+                  to={auth.isSuperAdmin ? '/dashboard' : `/dashboard?tenant=${auth.org!.slug}`} 
                   replace 
                 />
               } 

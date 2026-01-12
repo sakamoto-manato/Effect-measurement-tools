@@ -25,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children, org, isSuperAdmin, onLogout, 
     if (isSuperAdmin) return '';
     const params = new URLSearchParams(location.search);
     const tenantId = params.get('tenant');
-    return tenantId ? `?tenant=${tenantId}` : (org ? `?tenant=${org.id}` : '');
+    return tenantId ? `?tenant=${tenantId}` : (org ? `?tenant=${org.slug}` : '');
   };
 
   // Linkのto属性を生成（法人用の場合はtenantパラメータを追加）

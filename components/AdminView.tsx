@@ -119,9 +119,9 @@ const AdminView: React.FC<AdminViewProps> = ({ type, onSelectOrg, orgId }) => {
   };
 
   const handleOpenTenantLogin = (org: Organization) => {
-    // Generate the URL for the specific corporation's login page using UUID
+    // Generate the URL for the specific corporation's login page using slug
     const url = new URL(window.location.href);
-    url.searchParams.set('tenant', org.id); // UUIDを使用
+    url.searchParams.set('tenant', org.slug); // slug（会社名ベース）を使用
     // Redirect to simulate jumping to the corporate-specific dashboard login
     window.location.href = url.toString();
   };
