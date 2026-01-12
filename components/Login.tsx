@@ -46,8 +46,27 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // システム管理者のログイン（特別なアカウントID）
+    setError(''); // エラーメッセージをリセット
+
+    // 法人用ログインページの場合（tenantOrgが設定されている）
+    if (tenantOrg) {
+      // その法人のアカウントIDのみ受け付ける
+      if (accountId !== tenantOrg.accountId) {
+        setError('この法人のアカウントIDを入力してください。');
+        return;
+      }
+
+      // パスワードチェック
+      if (tenantOrg.password === password || password === 'demo123') {
+        onLogin(tenantOrg, false);
+      } else {
+        setError('パスワードが正しくありません。');
+      }
+      return;
+    }
+
+    // 管理者用ログインページの場合（tenantOrgが設定されていない）
+    // 管理者ID（admin）のみ受け付ける
     if (accountId === 'admin' && password === 'admin') {
       // システム管理者用のダミー組織を作成
       const adminOrg: Organization = {
@@ -64,15 +83,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       return;
     }
 
-    // 法人アカウントのログイン
+    // 管理者用ログインページで法人IDが入力された場合
     const org = MOCK_ORGS.find(o => o.accountId === accountId);
     if (org) {
-      // デモ用：パスワードチェック（実際の実装ではハッシュ化されたパスワードと比較）
-      if (org.password === password || password === 'demo123') {
-        onLogin(org, false);
-      } else {
-        setError('アカウントIDまたはパスワードが正しくありません。');
-      }
+      setError('管理者用ログインページでは管理者ID（admin）のみ使用できます。法人用ログインページからログインしてください。');
     } else {
       setError('アカウントIDまたはパスワードが正しくありません。');
     }
@@ -111,7 +125,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className="flex justify-center mb-4">
                   <img src="/EffiQ-logo.png" alt="EffiQ" className="h-12 sm:h-16 w-auto" />
                 </div>
-                <p className="text-slate-500 text-sm sm:text-base">法人アカウントでログインしてください</p>
+                <p className="text-slate-500 text-sm sm:text-base">システム管理者用ログイン</p>
               </>
             )}
           </div>
@@ -119,19 +133,24 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                {tenantOrg ? 'アカウントID' : 'アカウントID / システム管理者ID'}
+                {tenantOrg ? 'アカウントID' : '管理者ID'}
               </label>
               <input
                 type="text"
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
-                placeholder={tenantOrg ? tenantOrg.accountId : "法人のアカウントID または 'admin'"}
+                placeholder={tenantOrg ? tenantOrg.accountId : "管理者ID (admin)"}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
                 required
+                readOnly={!!tenantOrg} // 法人用ログインページでは読み取り専用
               />
-              {tenantOrg && (
+              {tenantOrg ? (
                 <p className="mt-1 text-xs text-slate-500">
                   この法人のアカウントID: {tenantOrg.accountId}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-slate-500">
+                  管理者用ログインページでは管理者ID（admin）のみ使用できます
                 </p>
               )}
             </div>
@@ -166,14 +185,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           <div className="mt-10 pt-8 border-t border-slate-100">
             <p className="text-center text-xs text-slate-400 font-medium uppercase tracking-widest mb-4">Demo Accounts</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => { setAccountId('admin'); setPassword('admin'); }}
-                className="text-[10px] py-2 px-3 bg-slate-50 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100"
-              >
-                System Admin
-              </button>
+            <div className="grid grid-cols-1 gap-3">
               {tenantOrg ? (
+                // 法人用ログインページ：その法人のアカウントのみ
                 <button
                   onClick={() => { setAccountId(tenantOrg.accountId); setPassword('demo123'); }}
                   className="text-[10px] py-2 px-3 bg-slate-50 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100"
@@ -181,11 +195,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   {tenantOrg.name}
                 </button>
               ) : (
+                // 管理者用ログインページ：管理者アカウントのみ
                 <button
-                  onClick={() => { setAccountId('tech-frontier'); setPassword('demo123'); }}
+                  onClick={() => { setAccountId('admin'); setPassword('admin'); }}
                   className="text-[10px] py-2 px-3 bg-slate-50 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100"
                 >
-                  Tech Frontier
+                  System Admin
                 </button>
               )}
             </div>
