@@ -75,6 +75,7 @@ export async function getOrganizations(): Promise<Organization[]> {
         avgScore: Math.round(avgScore),
         // account_idカラムが存在する場合はそれを使用、なければslugを使用（後方互換性）
         accountId: (org as any).account_id || org.slug,
+        password: (org as any).password, // パスワードを取得
       };
     }));
 
@@ -158,15 +159,16 @@ export async function getOrganizationById(id: string): Promise<Organization | nu
       console.error(`法人 ${data.name} の平均スコア計算エラー:`, error);
     }
 
-    return {
-      id: data.id,
-      slug: data.slug,
-      name: data.name,
-      createdAt: data.created_at.split('T')[0],
-      memberCount: memberCount || 0,
-      avgScore: Math.round(avgScore),
-      accountId: (data as any).account_id || data.slug,
-    };
+      return {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        createdAt: data.created_at.split('T')[0],
+        memberCount: memberCount || 0,
+        avgScore: Math.round(avgScore),
+        accountId: (data as any).account_id || data.slug,
+        password: (data as any).password, // パスワードを取得
+      };
   } catch (error) {
     console.error('法人の取得に失敗しました:', error);
     return null;
@@ -236,15 +238,16 @@ export async function getOrganizationBySlug(slug: string): Promise<Organization 
       console.error(`法人 ${data.name} の平均スコア計算エラー:`, error);
     }
 
-    return {
-      id: data.id,
-      slug: data.slug,
-      name: data.name,
-      createdAt: data.created_at.split('T')[0],
-      memberCount: memberCount || 0,
-      avgScore: Math.round(avgScore),
-      accountId: (data as any).account_id || data.slug,
-    };
+      return {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        createdAt: data.created_at.split('T')[0],
+        memberCount: memberCount || 0,
+        avgScore: Math.round(avgScore),
+        accountId: (data as any).account_id || data.slug,
+        password: (data as any).password, // パスワードを取得
+      };
   } catch (error) {
     console.error('法人の取得に失敗しました:', error);
     return null;
@@ -270,6 +273,7 @@ export async function createOrganization(
         slug: orgData.slug,
         name: orgData.name,
         account_id: orgData.accountId, // アカウントIDを保存
+        password: orgData.password, // パスワードを保存
       })
       .select()
       .single();
@@ -289,6 +293,7 @@ export async function createOrganization(
       memberCount: 0,
       avgScore: 0,
       accountId: (data as any).account_id || data.slug,
+      password: (data as any).password || orgData.password, // Supabaseから取得したパスワードを使用
       // その他のフィールドは現在のスキーマにないため、デフォルト値を使用
       logo: orgData.logo,
       description: orgData.description,
@@ -296,7 +301,6 @@ export async function createOrganization(
       address: orgData.address,
       phone: orgData.phone,
       email: orgData.email,
-      password: orgData.password,
     };
   } catch (error) {
     console.error('法人の作成に失敗しました:', error);
@@ -325,6 +329,7 @@ export async function updateOrganization(
     if (orgData.name) updateData.name = orgData.name;
     if (orgData.slug) updateData.slug = orgData.slug;
     if (orgData.accountId) updateData.account_id = orgData.accountId;
+    if (orgData.password) updateData.password = orgData.password; // パスワードを更新
 
     const { data, error } = await supabase
       .from('organizations')
@@ -379,15 +384,16 @@ export async function updateOrganization(
       console.error(`法人 ${data.name} の平均スコア計算エラー:`, error);
     }
 
-    return {
-      id: data.id,
-      slug: data.slug,
-      name: data.name,
-      createdAt: data.created_at.split('T')[0],
-      memberCount: memberCount || 0,
-      avgScore: Math.round(avgScore),
-      accountId: (data as any).account_id || data.slug,
-    };
+      return {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        createdAt: data.created_at.split('T')[0],
+        memberCount: memberCount || 0,
+        avgScore: Math.round(avgScore),
+        accountId: (data as any).account_id || data.slug,
+        password: (data as any).password, // パスワードを取得
+      };
   } catch (error) {
     console.error('法人の更新に失敗しました:', error);
     throw error;
@@ -529,6 +535,7 @@ export async function getOrganizationByAccountId(accountId: string): Promise<Org
         memberCount: memberCount || 0,
         avgScore: Math.round(avgScore),
         accountId: (slugData as any).account_id || slugData.slug,
+        password: (slugData as any).password, // パスワードを取得
       };
     }
 
@@ -565,15 +572,16 @@ export async function getOrganizationByAccountId(accountId: string): Promise<Org
       console.error(`法人 ${data.name} の平均スコア計算エラー:`, error);
     }
 
-    return {
-      id: data.id,
-      slug: data.slug,
-      name: data.name,
-      createdAt: data.created_at.split('T')[0],
-      memberCount: memberCount || 0,
-      avgScore: Math.round(avgScore),
-      accountId: (data as any).account_id || data.slug,
-    };
+      return {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        createdAt: data.created_at.split('T')[0],
+        memberCount: memberCount || 0,
+        avgScore: Math.round(avgScore),
+        accountId: (data as any).account_id || data.slug,
+        password: (data as any).password, // パスワードを取得
+      };
   } catch (error) {
     console.error('法人の取得に失敗しました:', error);
     return null;
