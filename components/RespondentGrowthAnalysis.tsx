@@ -36,6 +36,8 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
   // 属性フィルタ用のstate
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [attributeFilters, setAttributeFilters] = useState<{ [key: string]: string }>({});
+  // 分析ビューのタイプ（'all' | 'department' | 'position'）
+  const [analysisView, setAnalysisView] = useState<'all' | 'department' | 'position'>('all');
 
   const targetOrgId = viewingOrg?.id || org.id;
   const rankDefinition = viewingOrg?.rankDefinition || org.rankDefinition || getRankDefinition(targetOrgId);
@@ -445,12 +447,111 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
     }
   };
 
+  // 部署別・役職別の集計データを計算
+  const departmentStats = useMemo(() => {
+    if (!identifyAttributeQuestions.department || analysisView !== 'department') return [];
+    
+    const deptMap = new Map<string, { responses: SurveyResponse[]; names: Set<string> }>();
+    
+    filteredResponses.forEach(response => {
+      const deptValue = extractAttributeValue(response, identifyAttributeQuestions.department!.questionId, identifyAttributeQuestions.department!.type);
+      if (deptValue) {
+        const dept = deptValue.split(',')[0].trim(); // 複数選択の場合は最初の値を使用
+        if (!deptMap.has(dept)) {
+          deptMap.set(dept, { responses: [], names: new Set() });
+        }
+        const deptData = deptMap.get(dept)!;
+        deptData.responses.push(response);
+        deptData.names.add(response.respondentName);
+      }
+    });
+    
+    return Array.from(deptMap.entries()).map(([dept, data]) => {
+      const scores = data.responses.map(r => {
+        const s = calculateScoreFromResponse(r, rankDefinition || undefined);
+        return calculateOverallScore(s);
+      });
+      const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+      
+      // 成長率を計算（時系列でソートした最初と最後のスコアから）
+      const responsesWithScores = data.responses.map(r => {
+        const s = calculateScoreFromResponse(r, rankDefinition || undefined);
+        return {
+          response: r,
+          score: calculateOverallScore(s),
+          timestamp: new Date(r.submittedAt).getTime(),
+        };
+      }).sort((a, b) => a.timestamp - b.timestamp);
+      
+      const growthRate = responsesWithScores.length >= 2 && responsesWithScores[0].score > 0
+        ? Math.round(((responsesWithScores[responsesWithScores.length - 1].score - responsesWithScores[0].score) / responsesWithScores[0].score) * 100 * 10) / 10
+        : 0;
+      
+      return {
+        name: dept,
+        avgScore,
+        growthRate,
+        memberCount: data.names.size,
+        responseCount: data.responses.length,
+      };
+    }).sort((a, b) => b.avgScore - a.avgScore);
+  }, [filteredResponses, identifyAttributeQuestions, analysisView, rankDefinition]);
+
+  const positionStats = useMemo(() => {
+    if (!identifyAttributeQuestions.position || analysisView !== 'position') return [];
+    
+    const positionMap = new Map<string, { responses: SurveyResponse[]; names: Set<string> }>();
+    
+    filteredResponses.forEach(response => {
+      const positionValue = extractAttributeValue(response, identifyAttributeQuestions.position!.questionId, identifyAttributeQuestions.position!.type);
+      if (positionValue) {
+        const position = positionValue.split(',')[0].trim(); // 複数選択の場合は最初の値を使用
+        if (!positionMap.has(position)) {
+          positionMap.set(position, { responses: [], names: new Set() });
+        }
+        const positionData = positionMap.get(position)!;
+        positionData.responses.push(response);
+        positionData.names.add(response.respondentName);
+      }
+    });
+    
+    return Array.from(positionMap.entries()).map(([position, data]) => {
+      const scores = data.responses.map(r => {
+        const s = calculateScoreFromResponse(r, rankDefinition || undefined);
+        return calculateOverallScore(s);
+      });
+      const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+      
+      // 成長率を計算（時系列でソートした最初と最後のスコアから）
+      const responsesWithScores = data.responses.map(r => {
+        const s = calculateScoreFromResponse(r, rankDefinition || undefined);
+        return {
+          response: r,
+          score: calculateOverallScore(s),
+          timestamp: new Date(r.submittedAt).getTime(),
+        };
+      }).sort((a, b) => a.timestamp - b.timestamp);
+      
+      const growthRate = responsesWithScores.length >= 2 && responsesWithScores[0].score > 0
+        ? Math.round(((responsesWithScores[responsesWithScores.length - 1].score - responsesWithScores[0].score) / responsesWithScores[0].score) * 100 * 10) / 10
+        : 0;
+      
+      return {
+        name: position,
+        avgScore,
+        growthRate,
+        memberCount: data.names.size,
+        responseCount: data.responses.length,
+      };
+    }).sort((a, b) => b.avgScore - a.avgScore);
+  }, [filteredResponses, identifyAttributeQuestions, analysisView, rankDefinition]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">ランク推移</h2>
-          <p className="text-sm sm:text-base text-slate-600">社員のAI活用レベルの変化を追跡</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">分析</h2>
+          <p className="text-sm sm:text-base text-slate-600">AI活用状況の詳細分析とインサイト</p>
         </div>
         {isSuperAdmin && organizations && organizations.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -479,6 +580,53 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
               </button>
             )}
           </div>
+        )}
+      </div>
+
+      {/* 分析ビュータブ */}
+      <div className="bg-white p-1 rounded-lg shadow-sm border border-slate-200 inline-flex gap-1">
+        <button
+          onClick={() => {
+            setAnalysisView('all');
+            setAttributeFilters({});
+          }}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            analysisView === 'all'
+              ? 'bg-indigo-600 text-white'
+              : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+          }`}
+        >
+          全体分析
+        </button>
+        {identifyAttributeQuestions.department && (
+          <button
+            onClick={() => {
+              setAnalysisView('department');
+              setAttributeFilters({});
+            }}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              analysisView === 'department'
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+            }`}
+          >
+            部署別分析
+          </button>
+        )}
+        {identifyAttributeQuestions.position && (
+          <button
+            onClick={() => {
+              setAnalysisView('position');
+              setAttributeFilters({});
+            }}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              analysisView === 'position'
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+            }`}
+          >
+            役職別分析
+          </button>
         )}
       </div>
 
@@ -625,7 +773,86 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
         </div>
       )}
 
-      {/* ランクサマリーカード */}
+      {/* 部署別分析 */}
+      {analysisView === 'department' && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">部署別分析</h3>
+          {departmentStats.length > 0 ? (
+            <div className="space-y-4">
+              {departmentStats.map((dept) => (
+                <div key={dept.name} className="border border-slate-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-slate-800">{dept.name}</h4>
+                    <span className="text-sm text-slate-600">
+                      {dept.memberCount}名 / {dept.responseCount}件の回答
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">平均スコア</p>
+                      <p className="text-2xl font-bold text-indigo-600">{dept.avgScore}点</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">成長率</p>
+                      <p className={`text-2xl font-bold ${dept.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {dept.growthRate >= 0 ? '+' : ''}{dept.growthRate}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-slate-600">部署別のデータがありません。</p>
+              <p className="text-sm text-slate-500 mt-2">アンケートに部署に関する質問が含まれているか確認してください。</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 役職別分析 */}
+      {analysisView === 'position' && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">役職別分析</h3>
+          {positionStats.length > 0 ? (
+            <div className="space-y-4">
+              {positionStats.map((position) => (
+                <div key={position.name} className="border border-slate-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-slate-800">{position.name}</h4>
+                    <span className="text-sm text-slate-600">
+                      {position.memberCount}名 / {position.responseCount}件の回答
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">平均スコア</p>
+                      <p className="text-2xl font-bold text-indigo-600">{position.avgScore}点</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">成長率</p>
+                      <p className={`text-2xl font-bold ${position.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {position.growthRate >= 0 ? '+' : ''}{position.growthRate}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-slate-600">役職別のデータがありません。</p>
+              <p className="text-sm text-slate-500 mt-2">アンケートに役職に関する質問が含まれているか確認してください。</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 全体分析の表示（analysisView === 'all'の場合のみ） */}
+      {analysisView === 'all' && (
+        <>
+          {/* ランクサマリーカード */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-3 mb-3">
@@ -970,6 +1197,8 @@ const RespondentGrowthAnalysis: React.FC<RespondentGrowthAnalysisProps> = ({
             上記から回答者を選択すると、詳細な成長率グラフが表示されます。
           </p>
         </div>
+      )}
+        </>
       )}
     </div>
   );
